@@ -652,7 +652,7 @@ function storiesFor(y, D, T, R, SP){
 function histHTML(s){
   const c = s.drivers[0], t = s.teams[0], p2 = s.drivers[1];
   const web = ((DATA.stories || {})[s.y] || []).slice(0, 2);
-  const webTitle = web.some(x => /title|champion/i.test(x.title));   // a researched title story makes the auto one redundant
+  const webTitle = web.some(x => /title|champion/i.test(x.title + " " + x.text));   // a researched title story makes the auto one redundant
   const auto = s.stories.filter(x => !(web.length && x.kind === "champ") && !(webTitle && x.kind === "title")).slice(0, 5 - web.length);
   let h = `<section data-fixed="1"><div class="tcard"><span class="label">${s.y} champions <b style="color:var(--red)">//</b> ${s.nRaces} races</span>
     <div class="verdict"><b>Drivers:</b> ${esc(c ? c.name : "n/a")}${c ? ` (${esc(c.team)}), ${pts(c.pts)} pts, ${c.wins} win${c.wins === 1 ? "" : "s"}` : ""}</div>

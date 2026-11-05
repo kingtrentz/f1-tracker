@@ -1,5 +1,5 @@
 {
-  "_about": "Researched headlines for the History tab. Written in our own words, each checked against the linked source. Add more seasons the same way; the page fills the rest of the top 5 from the results data.",
+  "_about": "Researched headlines for the History tab, one or two per season from 1950 on. Written in our own words, each checked against the linked source. The page fills the rest of the top 5 from the results data.",
   "2025": [
     {
       "title": "Norris wins the title by 2 points",
@@ -104,6 +104,886 @@
       "text": "Max Verstappen finished 7th in Malaysia at 17 years and 180 days, F1's youngest ever points scorer.",
       "src": "Sky Sports",
       "url": "https://www.skysports.com/f1/news/12471/9781045/toro-rossos-franz-tost-proud-of-his-young-drivers-performances"
+    }
+  ],
+  "2014": [
+    {
+      "title": "The hybrid era begins with Mercedes in charge",
+      "text": "New 1.6-litre turbo V6 hybrids replaced the V8s, and Mercedes won 16 of 19 races. Hamilton beat Rosberg by 67 points in a finale that paid double points.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2014_Formula_One_World_Championship"
+    },
+    {
+      "title": "Jules Bianchi's crash at Suzuka",
+      "text": "Bianchi suffered a serious head injury in the wet Japanese GP. He never woke from his coma and died in July 2015.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2014_Formula_One_World_Championship"
+    }
+  ],
+  "2013": [
+    {
+      "title": "Vettel's 'Multi 21' in Malaysia",
+      "text": "Vettel ignored team orders and passed teammate Mark Webber late on to win, apologised, then later said he wasn't sorry.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2013_Formula_One_World_Championship"
+    },
+    {
+      "title": "Nine wins in a row to finish the year",
+      "text": "Vettel closed 2013 with nine straight wins, a single-season record, on the way to his fourth title in a row.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2013_Formula_One_World_Championship"
+    }
+  ],
+  "2012": [
+    {
+      "title": "Seven winners in the first seven races",
+      "text": "Seven different drivers won the opening seven rounds, a series record.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2012_Formula_One_World_Championship"
+    },
+    {
+      "title": "Vettel survives a chaotic Brazil decider",
+      "text": "Starting the finale 13 points clear of Alonso, Vettel came home sixth in a wet race of attrition to win his third straight title.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2012_Formula_One_World_Championship"
+    }
+  ],
+  "2011": [
+    {
+      "title": "Button wins Canada from last place",
+      "text": "After a two-hour rain stoppage and a drive-through that dropped him to the back, Button passed Vettel on the final lap to win.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2011_Formula_One_World_Championship"
+    },
+    {
+      "title": "Vettel's record 15 poles",
+      "text": "Vettel took 15 pole positions, beating Nigel Mansell's single-season record, and won the title by 122 points.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2011_Formula_One_World_Championship"
+    }
+  ],
+  "2010": [
+    {
+      "title": "Four drivers, one finale",
+      "text": "Vettel, Webber, Alonso and Hamilton could all win the title in Abu Dhabi. Vettel had never led the standings before that race and won it by four points.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2010_Formula_One_World_Championship"
+    },
+    {
+      "title": "Alonso stuck behind Petrov",
+      "text": "An early pit stop left Alonso trapped behind Vitaly Petrov's Renault, and seventh place wasn't enough. Vettel became the youngest champion yet.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2010_Formula_One_World_Championship"
+    }
+  ],
+  "2009": [
+    {
+      "title": "Brawn GP: from closed team to champions",
+      "text": "Honda quit F1 in December 2008. Ross Brawn bought the team, and Button won six of the first seven races on the way to both titles in Brawn's only season.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2009_Formula_One_World_Championship"
+    },
+    {
+      "title": "The double diffuser row",
+      "text": "Rivals protested the clever rear diffusers on the Brawn, Toyota and Williams, but the FIA ruled them legal.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2009_Formula_One_World_Championship"
+    }
+  ],
+  "2008": [
+    {
+      "title": "Hamilton's title at the last corner",
+      "text": "Massa won in Brazil and his family were celebrating until Hamilton passed Glock at the final corner for fifth, taking the title by one point.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2008_Formula_One_World_Championship"
+    },
+    {
+      "title": "Crashgate in Singapore",
+      "text": "Renault's Nelson Piquet Jr. crashed on purpose to bring out a safety car that helped teammate Alonso win. Team boss Flavio Briatore resigned when it came out.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2008_Formula_One_World_Championship"
+    }
+  ],
+  "2007": [
+    {
+      "title": "Spygate: McLaren thrown out",
+      "text": "McLaren was found guilty of using confidential Ferrari data and excluded from the constructors' championship.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2007_Formula_One_World_Championship"
+    },
+    {
+      "title": "Räikkönen steals it from third",
+      "text": "Seven points behind leader Hamilton before the finale, Räikkönen won the title by one point over both McLaren drivers.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2007_Formula_One_World_Championship"
+    }
+  ],
+  "2006": [
+    {
+      "title": "Alonso beats Schumacher again",
+      "text": "Alonso took his second title by 13 points, and Schumacher announced in September he would retire at season's end.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2006_Formula_One_World_Championship"
+    },
+    {
+      "title": "Schumacher parks it at Rascasse",
+      "text": "Stewards ruled he deliberately stopped on track in Monaco qualifying, deleted his times, and sent him to the back.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2006_Formula_One_World_Championship"
+    }
+  ],
+  "2005": [
+    {
+      "title": "Six-car US Grand Prix",
+      "text": "Michelin said its tyres weren't safe on Indianapolis's banking, so its teams pulled out and only six Bridgestone cars started.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2005_Formula_One_World_Championship"
+    },
+    {
+      "title": "Alonso ends Schumacher's reign",
+      "text": "At 24, Alonso became the youngest champion yet and ended Schumacher and Ferrari's five-year run of titles.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2005_Formula_One_World_Championship"
+    }
+  ],
+  "2004": [
+    {
+      "title": "Schumacher wins 13 and a seventh title",
+      "text": "Schumacher won a record 13 races and sealed his seventh and final title at Spa, while Ferrari took a sixth straight constructors' crown.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2004_Formula_One_World_Championship"
+    },
+    {
+      "title": "Räikkönen wins Spa from 10th",
+      "text": "Kimi Räikkönen came from 10th on the grid to win the Belgian GP, McLaren's only win of the year.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2004_Formula_One_World_Championship"
+    }
+  ],
+  "2003": [
+    {
+      "title": "Schumacher's record sixth title",
+      "text": "Schumacher held off Räikkönen by just two points to break Juan Manuel Fangio's 46-year-old record for titles.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2003_Formula_One_World_Championship"
+    },
+    {
+      "title": "The wrong winner in Brazil",
+      "text": "The crash-shortened Brazilian GP was first given to Räikkönen. A timing error was found, and Giancarlo Fisichella was handed his first win before the next race.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2003_Formula_One_World_Championship"
+    }
+  ],
+  "2002": [
+    {
+      "title": "A podium in every single race",
+      "text": "Schumacher finished on the podium at all 17 rounds, the only driver ever to do it, and won the title with six races still to go.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2002_Formula_One_World_Championship"
+    }
+  ],
+  "2001": [
+    {
+      "title": "Schumacher passes Prost's win record",
+      "text": "His 52nd career win, at Spa, broke Alain Prost's all-time mark, and he had the title wrapped up in Hungary.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2001_Formula_One_World_Championship"
+    },
+    {
+      "title": "Häkkinen walks away",
+      "text": "Mika Häkkinen announced a one-year break that turned into retirement, while Juan Pablo Montoya took his first win at Monza.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2001_Formula_One_World_Championship"
+    }
+  ],
+  "2000": [
+    {
+      "title": "Ferrari's first drivers' title in 21 years",
+      "text": "Schumacher clinched his first championship with Ferrari at Suzuka, ending the team's long wait for a drivers' title.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2000_Formula_One_World_Championship"
+    },
+    {
+      "title": "A track invader at Hockenheim",
+      "text": "A man walked onto the circuit during the German GP, bringing out the safety car, and Rubens Barrichello went on to take his first career win.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2000_Formula_One_World_Championship"
+    }
+  ],
+  "1999": [
+    {
+      "title": "Schumacher breaks his leg at Silverstone",
+      "text": "A brake failure sent his Ferrari into the barrier at Stowe at around 200 mph. He missed six races, and his title hopes went with it.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1999_Formula_One_World_Championship"
+    },
+    {
+      "title": "Ferrari disqualified, then reinstated",
+      "text": "Both Ferraris were ruled illegal after Malaysia, which would have crowned Häkkinen on the spot. Ferrari won its appeal, and Häkkinen beat Irvine by two points at the finale.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1999_Formula_One_World_Championship"
+    }
+  ],
+  "1998": [
+    {
+      "title": "Carnage at the Spa start",
+      "text": "More than half the field crashed on the first lap in the rain, Schumacher later ran into Coulthard while lapping him, and Damon Hill gave Jordan its first ever win in a 1-2.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1998_Formula_One_World_Championship"
+    },
+    {
+      "title": "Grooved tyres and narrower cars",
+      "text": "New rules brought grooved tyres and narrower cars to slow things down, and Mika Häkkinen won his first title for McLaren.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1998_Formula_One_World_Championship"
+    }
+  ],
+  "1997": [
+    {
+      "title": "Schumacher turns into Villeneuve at Jerez",
+      "text": "In the title decider, Schumacher turned into Villeneuve's Williams and retired. The FIA ruled it deliberate and disqualified him from the whole championship.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1997_Formula_One_World_Championship"
+    }
+  ],
+  "1996": [
+    {
+      "title": "Only three cars finish at Monaco",
+      "text": "Olivier Panis won his only Grand Prix in a race with just three cars running at the end, the fewest ever.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1996_Formula_One_World_Championship"
+    },
+    {
+      "title": "Damon Hill follows his father",
+      "text": "Hill became the first son of a world champion to win the title himself, 28 years after Graham's second crown.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1996_Formula_One_World_Championship"
+    }
+  ],
+  "1995": [
+    {
+      "title": "Schumacher and Hill keep colliding",
+      "text": "The title rivals took each other out at Silverstone and again at Monza, and Schumacher won nine races to retain his crown.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1995_Formula_One_World_Championship"
+    },
+    {
+      "title": "Benetton's only constructors' title",
+      "text": "After a fuel row in Brazil cost them points, Benetton still won the teams' championship for the only time in their history.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1995_Formula_One_World_Championship"
+    }
+  ],
+  "1994": [
+    {
+      "title": "The Imola weekend",
+      "text": "Roland Ratzenberger was killed in qualifying for the San Marino GP, and Ayrton Senna died after crashing at Tamburello on lap 7 of the race the next day.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1994_Formula_One_World_Championship"
+    },
+    {
+      "title": "Decided by a collision in Adelaide",
+      "text": "Schumacher and Hill collided on lap 35 of the finale and both retired, handing Schumacher the title by one point after a year that included two disqualifications and a two-race ban.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1994_Formula_One_World_Championship"
+    }
+  ],
+  "1993": [
+    {
+      "title": "Senna's first lap at Donington",
+      "text": "In the damp European GP, Senna passed four cars in quick succession on the opening lap and went on to win.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1993_Formula_One_World_Championship"
+    },
+    {
+      "title": "Prost wins a fourth title and retires",
+      "text": "Driving a Williams packed with active suspension and electronic aids, Prost won seven races and the title, then walked away from F1.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1993_Formula_One_World_Championship"
+    }
+  ],
+  "1992": [
+    {
+      "title": "Mansell's runaway year",
+      "text": "Nigel Mansell won the first five races, took a record nine wins, and had the title sealed in Hungary with five races left.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1992_Formula_One_World_Championship"
+    },
+    {
+      "title": "Schumacher's first win",
+      "text": "Michael Schumacher took his first Grand Prix victory at Spa, a year after making his debut there.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1992_Formula_One_World_Championship"
+    }
+  ],
+  "1991": [
+    {
+      "title": "Schumacher arrives",
+      "text": "Michael Schumacher debuted for Jordan at Spa in place of the jailed Bertrand Gachot, and Benetton signed him away one race later.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1991_Formula_One_World_Championship"
+    },
+    {
+      "title": "Mansell loses a wheel in Portugal",
+      "text": "Mansell's right rear came off in the pits while he led the title chase, and he was then disqualified. Senna, who won the first four races, took his third title.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1991_Formula_One_World_Championship"
+    }
+  ],
+  "1990": [
+    {
+      "title": "Senna takes Prost out at Suzuka",
+      "text": "The rivals collided at the first corner and both retired, giving Senna the title. He later admitted it was deliberate.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1990_Formula_One_World_Championship"
+    },
+    {
+      "title": "Donnelly survives at Jerez",
+      "text": "Martin Donnelly's Lotus broke its suspension in qualifying and hit the barrier head-on. He survived severe injuries, but his F1 career was over.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1990_Formula_One_World_Championship"
+    }
+  ],
+  "1989": [
+    {
+      "title": "The Suzuka chicane clash",
+      "text": "McLaren teammates Prost and Senna collided at the chicane. Senna rejoined and crossed the line first but was disqualified, handing Prost his third title.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1989_Formula_One_World_Championship"
+    },
+    {
+      "title": "Berger's fireball at Imola",
+      "text": "In the first year after the turbo ban, Gerhard Berger hit the Tamburello wall and his Ferrari caught fire. He escaped with burns and broken bones.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1989_Formula_One_World_Championship"
+    }
+  ],
+  "1988": [
+    {
+      "title": "McLaren win 15 of 16",
+      "text": "Senna and Prost won every race but Monza, where Prost's engine failed and Senna collided with a backmarker, gifting Ferrari a 1-2.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1988_Formula_One_World_Championship"
+    },
+    {
+      "title": "More points, no title for Prost",
+      "text": "Only a driver's best 11 results counted. Prost scored 105 points to Senna's 94, but Senna won the title 90 to 87 on counted scores.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1988_Formula_One_World_Championship"
+    }
+  ],
+  "1987": [
+    {
+      "title": "Mansell's Silverstone pass",
+      "text": "Mansell caught and passed teammate Piquet at Stowe with two laps to go to win the British GP.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1987_Formula_One_World_Championship"
+    },
+    {
+      "title": "Title settled by a qualifying crash",
+      "text": "Mansell hurt his back in a heavy Suzuka qualifying crash and was ruled out, handing Piquet his third championship. Prost also passed Jackie Stewart's record for career wins.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1987_Formula_One_World_Championship"
+    }
+  ],
+  "1986": [
+    {
+      "title": "Three-way decider in Adelaide",
+      "text": "Prost, Mansell and Piquet all arrived at the finale with a shot. Mansell retired from pole, and Prost won the race and the title by two points.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1986_Formula_One_World_Championship"
+    },
+    {
+      "title": "Elio de Angelis killed in testing",
+      "text": "De Angelis died after a fiery testing crash at Paul Ricard, which led to firefighters, a medical inspector, and a helicopter becoming mandatory at all tests.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1986_Formula_One_World_Championship"
+    }
+  ],
+  "1985": [
+    {
+      "title": "Senna's first win in the rain",
+      "text": "Ayrton Senna led every lap of a soaking Portuguese GP and lapped everyone but the runner-up.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1985_Formula_One_World_Championship"
+    },
+    {
+      "title": "Prost finally gets his title",
+      "text": "After two years as runner-up, Alain Prost won his first championship, and Niki Lauda retired at season's end.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1985_Formula_One_World_Championship"
+    }
+  ],
+  "1984": [
+    {
+      "title": "Lauda wins by half a point",
+      "text": "Niki Lauda beat McLaren teammate Alain Prost 72 to 71.5, the smallest margin in F1 history. The half point came from a rain-shortened Monaco.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1984_Formula_One_World_Championship"
+    },
+    {
+      "title": "Rookie Senna stuns Monaco",
+      "text": "In a Toleman, the rookie Ayrton Senna climbed to second in the rain and was closing on Prost when the race was stopped.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1984_Formula_One_World_Championship"
+    }
+  ],
+  "1983": [
+    {
+      "title": "First champion with a turbo engine",
+      "text": "Nelson Piquet's Brabham-BMW made him the first turbo-powered champion. He clinched it at Kyalami when Prost's turbo failed.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1983_Formula_One_World_Championship"
+    },
+    {
+      "title": "Ground effect banned",
+      "text": "Flat undertrays became mandatory to cut the dangerous cornering speeds of 1982.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1983_Formula_One_World_Championship"
+    }
+  ],
+  "1982": [
+    {
+      "title": "Gilles Villeneuve killed at Zolder",
+      "text": "Villeneuve died after a qualifying collision at the Belgian GP. Later that season, teammate Didier Pironi's career ended in a crash at Hockenheim, and Riccardo Paletti was killed at the start in Canada.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1982_Formula_One_World_Championship"
+    },
+    {
+      "title": "Eleven winners and a one-win champion",
+      "text": "Eleven different drivers won races, nobody won more than twice, and Keke Rosberg took the title with a single win.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1982_Formula_One_World_Championship"
+    }
+  ],
+  "1981": [
+    {
+      "title": "Piquet by one point in Las Vegas",
+      "text": "Nelson Piquet finished fifth in the car park circuit at Caesars Palace while Carlos Reutemann scored nothing, giving Piquet the title 50 to 49.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1981_Formula_One_World_Championship"
+    },
+    {
+      "title": "Reutemann ignores team orders",
+      "text": "In Brazil, Reutemann refused to let Williams teammate Alan Jones past and won, splitting the team for the rest of the year.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1981_Formula_One_World_Championship"
+    }
+  ],
+  "1980": [
+    {
+      "title": "Williams' first titles",
+      "text": "Alan Jones won the drivers' championship and Williams took its first constructors' crown.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1980_Formula_One_season"
+    },
+    {
+      "title": "A Grand Prix that didn't count",
+      "text": "The FISA-FOCA power struggle stripped the Spanish GP of championship status after it was run. Clay Regazzoni was paralysed in a crash at Long Beach.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1980_Formula_One_season"
+    }
+  ],
+  "1979": [
+    {
+      "title": "Villeneuve and Arnoux at Dijon",
+      "text": "The two banged wheels for second place over the final lap of the French GP, while Jean-Pierre Jabouille gave Renault the first ever win for a turbo engine.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1979_Formula_One_season"
+    },
+    {
+      "title": "Ferrari's last title for 21 years",
+      "text": "Jody Scheckter won the championship for Ferrari, while James Hunt and Niki Lauda both quit during the season.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1979_Formula_One_season"
+    }
+  ],
+  "1978": [
+    {
+      "title": "Ronnie Peterson killed at Monza",
+      "text": "Peterson's Lotus was caught in a start crash and burned. He died of complications, and teammate Mario Andretti became champion without celebrating.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1978_Formula_One_season"
+    },
+    {
+      "title": "The Brabham fan car wins once",
+      "text": "Brabham's fan-assisted car won its debut in Sweden with Niki Lauda and was never raced again.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1978_Formula_One_season"
+    }
+  ],
+  "1977": [
+    {
+      "title": "Tragedy at Kyalami",
+      "text": "Tom Pryce and marshal Frederik Jansen van Vuuren were both killed at the South African GP when Pryce's car hit the marshal.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1977_Formula_One_season"
+    },
+    {
+      "title": "Lauda wins, then walks out on Ferrari",
+      "text": "Niki Lauda clinched his second title and left Ferrari before the last two races. Renault also debuted its turbo engine.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1977_Formula_One_season"
+    }
+  ],
+  "1976": [
+    {
+      "title": "Lauda's Nürburgring fire",
+      "text": "Niki Lauda was badly burned when his Ferrari crashed and caught fire. He came back after missing only two races.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1976_Formula_One_season"
+    },
+    {
+      "title": "Hunt wins it in the Fuji rain",
+      "text": "Lauda pulled out of the soaked Japanese finale after two laps. Third place gave James Hunt the title by one point.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1976_Formula_One_season"
+    }
+  ],
+  "1975": [
+    {
+      "title": "The Montjuïc disaster",
+      "text": "Rolf Stommelen's car flew into spectators, killing four, and the Spanish GP was stopped. Lella Lombardi's sixth place made her the only woman to score championship points.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1975_Formula_One_season"
+    },
+    {
+      "title": "Lauda's first title, Hunt's first win",
+      "text": "Niki Lauda won five races to become champion, and James Hunt beat him at Zandvoort for Hesketh's only win.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1975_Formula_One_season"
+    }
+  ],
+  "1974": [
+    {
+      "title": "Level on points going into the finale",
+      "text": "Emerson Fittipaldi and Clay Regazzoni arrived at Watkins Glen tied. Fourth place gave Fittipaldi the title and McLaren its first championship.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1974_Formula_One_season"
+    },
+    {
+      "title": "Two drivers killed",
+      "text": "Peter Revson died in practice at Kyalami after a suspension failure, and Helmuth Koinigg was killed when a barrier failed at the US GP.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1974_Formula_One_season"
+    }
+  ],
+  "1973": [
+    {
+      "title": "Stewart's third title, Cevert's death",
+      "text": "Jackie Stewart won his third championship and retired. His teammate François Cevert was killed in practice at Watkins Glen, and Tyrrell withdrew from the race.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1973_Formula_One_season"
+    },
+    {
+      "title": "Purley's fight to save Williamson",
+      "text": "Roger Williamson's car caught fire at Zandvoort. David Purley stopped and tried to free him alone, but marshals arrived too late.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1973_Formula_One_season"
+    }
+  ],
+  "1972": [
+    {
+      "title": "Fittipaldi, the youngest champion yet",
+      "text": "At 25, Emerson Fittipaldi won the title for Lotus, a record that stood until 2005.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1972_Formula_One_season"
+    },
+    {
+      "title": "Beltoise's wet Monaco win",
+      "text": "Jean-Pierre Beltoise won the rain-soaked Monaco GP, his only win and BRM's last.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1972_Formula_One_season"
+    }
+  ],
+  "1971": [
+    {
+      "title": "Won by a hundredth at Monza",
+      "text": "Peter Gethin won the Italian GP by 0.010 seconds, with the top five covered by 0.61 seconds. It's still the closest finish in championship history.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1971_Formula_One_season"
+    },
+    {
+      "title": "Siffert and Rodríguez lost",
+      "text": "Pedro Rodríguez was killed in a sports car race in July, and Jo Siffert died in a fiery crash at Brands Hatch in October.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1971_Formula_One_season"
+    }
+  ],
+  "1970": [
+    {
+      "title": "Rindt, the only posthumous champion",
+      "text": "Jochen Rindt was killed in practice at Monza with four races left. Nobody passed his points total, so he was awarded the title after his death.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1970_Formula_One_season"
+    },
+    {
+      "title": "A brutal year",
+      "text": "Bruce McLaren died testing a sports car at Goodwood, and Piers Courage was killed at the Dutch GP.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1970_Formula_One_season"
+    }
+  ],
+  "1969": [
+    {
+      "title": "High wings banned after Montjuïc",
+      "text": "After crashes at the Spanish GP, including Rindt's rear wing collapsing, movable wings were banned. Stewart won the title for Matra.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1969_Formula_One_season"
+    },
+    {
+      "title": "Four cars in 0.19 seconds at Monza",
+      "text": "Stewart won the Italian GP with the top four covered by less than two tenths.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1969_Formula_One_season"
+    }
+  ],
+  "1968": [
+    {
+      "title": "Jim Clark killed at Hockenheim",
+      "text": "Clark died in a Formula Two race in April. Lotus teammate Graham Hill went on to win the title.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1968_Formula_One_season"
+    },
+    {
+      "title": "Wings and sponsor colours arrive",
+      "text": "Teams began running wings, and Lotus painted its cars in Gold Leaf colours, among the first sponsor liveries in F1.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1968_Formula_One_season"
+    }
+  ],
+  "1967": [
+    {
+      "title": "The Cosworth DFV wins first time out",
+      "text": "Jim Clark won at Zandvoort in the Lotus 49 on the debut of the engine that would power most of the grid for years.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1967_Formula_One_season"
+    },
+    {
+      "title": "Bandini's Monaco crash",
+      "text": "Lorenzo Bandini's Ferrari overturned and burned at the chicane. He died three days later. Denny Hulme took the title.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1967_Formula_One_season"
+    }
+  ],
+  "1966": [
+    {
+      "title": "Brabham wins in a Brabham",
+      "text": "Jack Brabham became the only driver to win the championship in a car bearing his own name, in the first year of 3-litre engines.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1966_Formula_One_season"
+    },
+    {
+      "title": "Stewart trapped at Spa",
+      "text": "Jackie Stewart spent about 25 minutes trapped in his crashed car soaked in fuel, and became F1's leading voice for safety.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1966_Formula_One_season"
+    }
+  ],
+  "1965": [
+    {
+      "title": "Clark's second title",
+      "text": "Jim Clark won six races and the championship, after Lotus skipped Monaco to race the Indianapolis 500.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1965_Formula_One_season"
+    },
+    {
+      "title": "Firsts for Honda and Stewart",
+      "text": "Richie Ginther gave Honda its first win in Mexico, and Jackie Stewart won for the first time at Monza.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1965_Formula_One_season"
+    }
+  ],
+  "1964": [
+    {
+      "title": "Three-way decider in Mexico",
+      "text": "Surtees, Graham Hill and Jim Clark all went to the finale able to win. Hill was spun by Bandini, and Surtees took the title for Ferrari.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1964_Formula_One_season"
+    },
+    {
+      "title": "Ferrari races in American colours",
+      "text": "In a row with the Italian federation, Ferrari entered its cars in white and blue under the North American Racing Team for the US GP.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1964_Formula_One_season"
+    }
+  ],
+  "1963": [
+    {
+      "title": "Clark wins 7 of 10",
+      "text": "Jim Clark won seven of the ten races for his first title, sealed with three races left. The seven-win record stood until 1988.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1963_Formula_One_season"
+    }
+  ],
+  "1962": [
+    {
+      "title": "An oil leak decides the title",
+      "text": "Clark was leading the South African finale by half a minute when a missing crankcase bolt let oil out, handing Graham Hill and BRM the championship.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1962_Formula_One_season"
+    },
+    {
+      "title": "Moss's Goodwood crash",
+      "text": "Stirling Moss crashed in a non-championship race at Goodwood and spent a month in a coma. He never raced in F1 again.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1962_Formula_One_season"
+    }
+  ],
+  "1961": [
+    {
+      "title": "Tragedy at Monza",
+      "text": "Wolfgang von Trips and about 14 spectators were killed after he collided with Jim Clark. Teammate Phil Hill won the race and became the first American champion.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1961_Formula_One_season"
+    },
+    {
+      "title": "Moss beats the Sharknoses at Monaco",
+      "text": "Ferrari's 156 won five of eight races, but Stirling Moss held off three of them in a private Lotus at Monaco.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1961_Formula_One_season"
+    }
+  ],
+  "1960": [
+    {
+      "title": "Black weekend at Spa",
+      "text": "Chris Bristow and Alan Stacey were both killed in the Belgian GP, and Stirling Moss broke both legs in practice.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1960_Formula_One_season"
+    },
+    {
+      "title": "The last win for a front-engined car",
+      "text": "The British teams boycotted Monza over its banking, and Phil Hill's Ferrari win there was the last ever for a front-engined car.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1960_Formula_One_season"
+    }
+  ],
+  "1959": [
+    {
+      "title": "Brabham pushes his car to the title",
+      "text": "Out of fuel near the end at Sebring, Jack Brabham pushed his Cooper over the line, enough for his first championship.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1959_Formula_One_season"
+    }
+  ],
+  "1958": [
+    {
+      "title": "Moss defends his rival, and loses by a point",
+      "text": "Moss argued for Hawthorn to keep his Portugal result after a disqualification. Hawthorn won the title 42 to 41 with one win to Moss's four.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1958_Formula_One_season"
+    },
+    {
+      "title": "A champion who walked away",
+      "text": "After Peter Collins was killed at the Nürburgring, Hawthorn retired at season's end. He died in a road accident about three months later.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1958_Formula_One_season"
+    }
+  ],
+  "1957": [
+    {
+      "title": "Fangio's Nürburgring masterpiece",
+      "text": "A slow stop left Fangio nearly a minute down. He broke the lap record ten times, passed both Ferraris on the penultimate lap, and won his fifth title.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1957_Formula_One_season"
+    },
+    {
+      "title": "First win for a British car",
+      "text": "Moss took over Tony Brooks's Vanwall at Aintree and won, the first championship win for a British constructor.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1957_Formula_One_season"
+    }
+  ],
+  "1956": [
+    {
+      "title": "Collins hands his car to Fangio",
+      "text": "At Monza, Peter Collins gave his Ferrari to Fangio and gave up his own title chance. Fangio finished second and won his fourth championship.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1956_Formula_One_season"
+    }
+  ],
+  "1955": [
+    {
+      "title": "The Le Mans disaster",
+      "text": "A crash at the 24 Hours killed 83 spectators. Four Grands Prix were cancelled, and Mercedes quit motorsport at the end of the year.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1955_Formula_One_season"
+    },
+    {
+      "title": "Ascari into the harbour, then killed",
+      "text": "Alberto Ascari crashed into Monaco harbour and swam away, then was killed testing at Monza four days later.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1955_Formula_One_season"
+    }
+  ],
+  "1954": [
+    {
+      "title": "Champion for two teams in one year",
+      "text": "Fangio started the season with Maserati, switched to Mercedes, and won the title, the only driver ever to do it with two teams in one season.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1954_Formula_One_season"
+    },
+    {
+      "title": "Seven drivers share fastest lap",
+      "text": "Timing to the whole second at the British GP left seven drivers tied for fastest lap, and each got a point.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1954_Formula_One_season"
+    }
+  ],
+  "1953": [
+    {
+      "title": "Hawthorn edges Fangio at Reims",
+      "text": "Mike Hawthorn and Fangio ran side by side for the final laps of the French GP before Hawthorn won at the line.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1953_Formula_One_season"
+    },
+    {
+      "title": "Ascari defends his title",
+      "text": "Alberto Ascari became the first driver to win back-to-back championships. The year began with spectators killed when Farina crashed into the crowd in Argentina.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1953_Formula_One_season"
+    }
+  ],
+  "1952": [
+    {
+      "title": "Ascari wins six of seven",
+      "text": "Under Formula Two rules, Alberto Ascari won six of the seven championship races he entered for Ferrari.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1952_Formula_One_season"
+    },
+    {
+      "title": "The champion breaks his neck",
+      "text": "Reigning champion Fangio crashed in a non-championship race at Monza and missed the rest of the year.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1952_Formula_One_season"
+    }
+  ],
+  "1951": [
+    {
+      "title": "Ferrari's first win",
+      "text": "José Froilán González beat the Alfa Romeos at Silverstone to give Ferrari its first championship victory.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1951_Formula_One_season"
+    },
+    {
+      "title": "Fangio's first title",
+      "text": "Fangio won the Spanish finale for Alfa Romeo while Ascari's Ferrari struggled with tyres. Alfa Romeo has not won a title since.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1951_Formula_One_season"
+    }
+  ],
+  "1950": [
+    {
+      "title": "The first World Championship race",
+      "text": "The championship began at Silverstone on 13 May 1950, with King George VI watching.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1950_Formula_One_season"
+    },
+    {
+      "title": "Alfa Romeo sweep",
+      "text": "Alfa Romeo won all six rounds it entered, and Nino Farina beat teammate Fangio by three points to become the first world champion.",
+      "src": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/1950_Formula_One_season"
     }
   ]
 }
