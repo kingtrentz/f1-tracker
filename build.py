@@ -328,6 +328,11 @@ def main():
     tm_d = title_math(sorted(std["drivers"], key=lambda r: -r["pts"]), races_left, sprints_left, RACE_MAX, SPRINT_MAX, "driver", bool(left and left[0]["sprint"]))
     tm_t = title_math([{"id": t["id"], "name": t["name"], "pts": t["pts"]} for t in sorted(std["teams"], key=lambda r: -r["pts"])],
                       races_left, sprints_left, TEAM_RACE_MAX, TEAM_SPRINT_MAX, "team", bool(left and left[0]["sprint"]))
+    try:   # a season that just finished gets saved for the History tab (the workflow commits it)
+        import fetch_history
+        done = rs_year if races_left == 0 and races else rs_year - 1
+        for a in fetch_history.ensure([done, done - 1]): print(f"OK saved {a} to history")
+    except Exception as e: print(f"NOTE history check skipped ({e})")
     ex = openf1_extras(y, nxt)
     data = {
         "season": rs_year, "nextSeason": nxt["season"] if nxt else None,
@@ -374,6 +379,11 @@ def write_site(data):
         html = tpl.replace("__PAGE__", pid).replace("__TITLE__", title).replace("__DATA__", blob)
         open(os.path.join(OUT, fn), "w", encoding="utf-8", newline="\n").write(html)
     open(os.path.join(OUT, "data.json"), "w", encoding="utf-8").write(json.dumps(data, ensure_ascii=False, separators=(",", ":")))
+    hist = os.path.join(HERE, "history")   # saved finished seasons for the History tab
+    if os.path.isdir(hist):
+        os.makedirs(os.path.join(OUT, "history"), exist_ok=True)
+        for f in os.listdir(hist):
+            if f.endswith(".json"): open(os.path.join(OUT, "history", f), "wb").write(open(os.path.join(hist, f), "rb").read())
     for f in ("logo.svg",):
         src = os.path.join(HERE, "templates", f)
         if os.path.exists(src): open(os.path.join(OUT, f), "wb").write(open(src, "rb").read())

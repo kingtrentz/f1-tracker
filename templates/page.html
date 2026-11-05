@@ -561,6 +561,9 @@ async function histLoad(y){
   const body = $("hist-body"); if (!body) return;
   let s = HIST[y];
   if (!s){ try { s = JSON.parse(localStorage.getItem("rl-hist-v1-" + y) || "null"); } catch (_) {} }
+  if (!s){   // saved copy on this site first (instant), live API as the fallback
+    try { const r = await fetch(`history/${y}.json`); if (r.ok){ const d = await r.json(); s = summarize(y, d.ds, d.cs, d.races, d.sprints); } } catch (_) {}
+  }
   if (!s){
     body.innerHTML = `<div class="empty">Loading the ${y} season from Jolpica-F1...</div>`;
     try {
