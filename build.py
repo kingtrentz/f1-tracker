@@ -337,6 +337,7 @@ def main():
         "standings": std, "title": {"drivers": tm_d, "teams": tm_t},
         "results": races, "teammates": teammates(races, std),
         "racesLeft": races_left, "sprintsLeft": sprints_left,
+        "stories": load_stories(),
     }
     if data["provisional"] and nxt and any(r["round"] == nxt["round"] for r in races) and data["provisional"]["session"] == "Race":
         data["provisional"] = None   # Jolpica already has the official result
@@ -347,6 +348,14 @@ def main():
     write_site(data)
     print(f"OK season {rs_year}, {len(races)} races, next: {nxt['name'] if nxt else 'none'}, errors: {len(ERRS['jolpica'])} jolpica / {len(ERRS['openf1'])} openf1")
     return 0 if ok_j else 1
+
+def load_stories():
+    """Researched headlines for the History tab (templates/stories.json), keyed by season."""
+    try:
+        d = json.load(open(os.path.join(HERE, "templates", "stories.json"), encoding="utf-8"))
+        return {k: v for k, v in d.items() if k.isdigit()}
+    except Exception as e:
+        print(f"NOTE stories.json not loaded ({e})"); return {}
 
 def cadence(nxt):
     """Minutes between updates: every 10 on race weekends, hourly otherwise (the workflow follows this)."""
@@ -359,7 +368,8 @@ def write_site(data):
     os.makedirs(OUT, exist_ok=True)
     blob = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     pages = {"index.html": ("next", "Next Race"), "standings.html": ("standings", "Standings"),
-             "results.html": ("results", "Results"), "teammates.html": ("teammates", "Teammate Battles")}
+             "results.html": ("results", "Results"), "teammates.html": ("teammates", "Teammate Battles"),
+             "history.html": ("history", "History")}
     for fn, (pid, title) in pages.items():
         html = tpl.replace("__PAGE__", pid).replace("__TITLE__", title).replace("__DATA__", blob)
         open(os.path.join(OUT, fn), "w", encoding="utf-8", newline="\n").write(html)

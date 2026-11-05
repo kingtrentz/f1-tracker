@@ -1,0 +1,109 @@
+{
+  "_about": "Researched headlines for the History tab. Written in our own words, each checked against the linked source. Add more seasons the same way; the page fills the rest of the top 5 from the results data.",
+  "2025": [
+    {
+      "title": "Norris wins the title by 2 points",
+      "text": "Lando Norris beat Max Verstappen by two points, sealing it with third place in the Abu Dhabi finale.",
+      "src": "Formula1.com",
+      "url": "https://www.formula1.com/en/latest/article/timeline-every-twist-and-turn-from-a-dramatic-2025-battle-for-the-drivers.4aJLnF16FT7QnKkhjtrGvf"
+    },
+    {
+      "title": "Both McLarens disqualified in Las Vegas",
+      "text": "Norris (2nd) and Piastri (4th) were thrown out after their cars' skid blocks wore below the legal minimum, pulling Verstappen level with Piastri in the standings.",
+      "src": "Formula1.com",
+      "url": "https://www.formula1.com/en/latest/article/timeline-every-twist-and-turn-from-a-dramatic-2025-battle-for-the-drivers.4aJLnF16FT7QnKkhjtrGvf"
+    }
+  ],
+  "2024": [
+    {
+      "title": "Hamilton announces a move to Ferrari",
+      "text": "Early in 2024, Lewis Hamilton confirmed he would leave Mercedes for Ferrari in 2025, a subplot that ran all season.",
+      "src": "The Race",
+      "url": "https://www.the-race.com/formula-1/inside-the-biggest-stories-of-f1-2024/"
+    },
+    {
+      "title": "McLaren's first constructors' title since 1998",
+      "text": "Norris won the Abu Dhabi finale to seal McLaren's first teams' championship in 26 years.",
+      "src": "Sky Sports",
+      "url": "https://www.skysports.com/f1/news/12433/13269443/mclaren-end-26-year-wait-for-constructors-title-after-norris-wins-abu-dhabi-gp"
+    }
+  ],
+  "2023": [
+    {
+      "title": "Verstappen wins 19 of 22",
+      "text": "A record 19 wins, including 10 in a row, while Red Bull won every race but Singapore.",
+      "src": "Formula1.com",
+      "url": "https://www.formula1.com/en/latest/article/in-numbers-the-remarkable-records-verstappen-and-red-bull-broke-during-the.5rU6XbfSRwp1wH9Uzp4RxI"
+    }
+  ],
+  "2022": [
+    {
+      "title": "Red Bull fined for breaking the budget cap",
+      "text": "The FIA fined Red Bull $7 million and cut its wind tunnel time after finding it overspent the 2021 cost cap.",
+      "src": "RACER",
+      "url": "https://racer.com/2022/10/28/red-bull-hit-with-7m-fine-docked-car-development-time-for-cost-cap-breach/"
+    }
+  ],
+  "2021": [
+    {
+      "title": "The Abu Dhabi final-lap controversy",
+      "text": "A late safety car restart let Verstappen, on fresh tyres, pass Hamilton on the last lap. The FIA later blamed human error but let the result stand, and race director Michael Masi was replaced.",
+      "src": "The Race",
+      "url": "https://the-race.com/formula-1/fia-admits-human-error-but-says-masi-acted-in-good-faith"
+    }
+  ],
+  "2020": [
+    {
+      "title": "Grosjean walks out of a fireball",
+      "text": "Romain Grosjean's car split in two and caught fire on lap 1 in Bahrain. He climbed out after 10 to 15 seconds in the flames with minor burns, and drivers credited the halo.",
+      "src": "CNBC",
+      "url": "https://www.cnbc.com/2020/11/29/f1-formula-one-driver-romain-grosjean-escapes-huge-fiery-crash.html"
+    }
+  ],
+  "2019": [
+    {
+      "title": "Chaos in the rain at Hockenheim",
+      "text": "Verstappen won a wet German GP where Hamilton crashed from the lead, Vettel climbed from last to 2nd, and Kvyat put Toro Rosso on the podium.",
+      "src": "Motor Sport",
+      "url": "https://www.motorsportmagazine.com/articles/news/best-races-2019-f1-season-german-grand-prix"
+    }
+  ],
+  "2018": [
+    {
+      "title": "Hamilton matches Fangio's five titles",
+      "text": "Fourth place in Mexico was enough for Lewis Hamilton's fifth championship, level with Juan Manuel Fangio.",
+      "src": "RACER",
+      "url": "https://racer.com/2018/10/28/verstappen-dominates-mexican-gp-as-hamilton-takes-fifth-title/"
+    }
+  ],
+  "2017": [
+    {
+      "title": "Vettel's Baku road rage",
+      "text": "Behind the safety car, Vettel ran into the back of leader Hamilton, then pulled alongside and banged wheels. He got a 10-second stop-go penalty.",
+      "src": "Sky Sports",
+      "url": "https://www.skysports.com/f1/news/12433/10926919/azerbaijan-gp-lewis-hamilton-criticises-dangerous-sebastian-vettel-after-2017-title-rivals-collide"
+    }
+  ],
+  "2016": [
+    {
+      "title": "Champion Rosberg retires five days later",
+      "text": "Nico Rosberg won his first title and then quit F1 less than a week afterward.",
+      "src": "Sports Illustrated",
+      "url": "https://www.si.com/racing/2016/12/02/f1-world-champion-nico-rosberg-retires"
+    },
+    {
+      "title": "Verstappen wins on his Red Bull debut, aged 18",
+      "text": "The Mercedes pair took each other out on lap 1 in Spain, and Verstappen became F1's youngest winner in his first race for Red Bull.",
+      "src": "Red Bull",
+      "url": "https://redbull.com/us-en/verstappen-wins-2016-spanish-grand-prix-recap"
+    }
+  ],
+  "2015": [
+    {
+      "title": "A 17-year-old scores points",
+      "text": "Max Verstappen finished 7th in Malaysia at 17 years and 180 days, F1's youngest ever points scorer.",
+      "src": "Sky Sports",
+      "url": "https://www.skysports.com/f1/news/12471/9781045/toro-rossos-franz-tost-proud-of-his-young-drivers-performances"
+    }
+  ]
+}

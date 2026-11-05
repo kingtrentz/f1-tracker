@@ -215,6 +215,20 @@ tr.out td{color:var(--faint)}
 
 .sur{display:none}
 @media (max-width:560px){.hide-sm{display:none}td.drv small{display:none}.full{display:none}.sur{display:inline}th,td{padding:7px 6px}}
+@media (max-width:560px){.tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) 30px;gap:4px}.tabs a{text-align:center;padding:5px 2px}.theme-btn{margin-left:0}}
+/* history */
+.hist-pick{display:grid;grid-template-columns:40px minmax(0,1fr) 40px;gap:8px}
+.hist-pick select{font-family:var(--f-display);font-weight:600;font-size:16px;padding:8px 10px;border-radius:8px;border:1px solid var(--band-line);background:var(--band);color:var(--band-ink);min-width:0}
+.hbtn{border:1px solid var(--line-strong);border-radius:8px;background:var(--panel);font-size:20px;font-weight:600;color:var(--red);padding:0}
+.hbtn:disabled{opacity:.35;cursor:default}
+.stories{margin:0;padding:0;list-style:none;counter-reset:st;display:grid;gap:6px}
+.stories li{counter-increment:st;display:grid;grid-template-columns:24px minmax(0,1fr);gap:1px 8px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+.stories li::before{content:counter(st);grid-row:span 3;font-family:var(--f-display);font-weight:700;font-size:19px;color:var(--red);line-height:1.15}
+.stories li.web{background:var(--bg);border-color:var(--red-line);box-shadow:inset 3px 0 0 var(--red)}
+.stories b{font-family:var(--f-display);font-weight:600;font-size:14.5px;line-height:1.3}
+.stories span{font-size:12.5px;color:var(--muted);line-height:1.4}
+.stories small{font-family:var(--f-mono);font-size:10px;color:var(--faint)}
+.stories small a{color:var(--red-ink)}
 /* live / provisional */
 .livebox{border:1px solid var(--red-line);border-radius:10px;padding:10px 12px;display:grid;gap:8px;background:var(--red-soft)}
 .livebox h3{font-size:15px;display:flex;align-items:center;gap:8px}
@@ -241,7 +255,7 @@ footer a{color:var(--muted)}
   <div class="upd num" id="upd"></div>
   <div class="stat-line" id="stat-line" hidden></div>
   <nav class="tabs" aria-label="Pages">
-    <a href="index.html" data-p="next">Next Race</a><a href="standings.html" data-p="standings">Standings</a><a href="results.html" data-p="results">Results</a><a href="teammates.html" data-p="teammates">Teammates</a>
+    <a href="index.html" data-p="next"><span class="full">Next Race</span><span class="sur">Next</span></a><a href="standings.html" data-p="standings"><span class="full">Standings</span><span class="sur">Points</span></a><a href="results.html" data-p="results">Results</a><a href="teammates.html" data-p="teammates"><span class="full">Teammates</span><span class="sur">H2H</span></a><a href="history.html" data-p="history">History</a>
     <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch theme">🌙</button>
   </nav>
 </header></div>
@@ -506,13 +520,167 @@ function duel(label, a, b, isPts){
   return `<span class="duel"><span class="label">${label}</span><span class="split" role="img" aria-label="${label}: ${pts(a)} to ${pts(b)}"><span class="a ${a ? "" : "zero"}" style="width:${t ? pa : 50}%">${a ? pts(a) : ""}</span><span class="b ${b ? "" : "zero"}" style="width:${t ? 100 - pa : 50}%">${b ? pts(b) : ""}</span></span></span>`;
 }
 
+/* ================= history ================= */
+const HIST = {};
+let HIST_YEAR = null;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function lastDone(){ return DATA.racesLeft === 0 && (DATA.results || []).length ? DATA.season : DATA.season - 1; }
+function viewHistory(){
+  const last = lastDone();
+  if (HIST_YEAR == null || HIST_YEAR > last || HIST_YEAR < 1950) HIST_YEAR = last;
+  const yrs = []; for (let y = last; y >= 1950; y--) yrs.push(y);
+  return `<section data-fixed="1"><div class="hist-pick">
+    <button type="button" class="hbtn" data-hy="${HIST_YEAR - 1}" ${HIST_YEAR <= 1950 ? "disabled" : ""} aria-label="Earlier season">‹</button>
+    <select id="hist-year" aria-label="Season">${yrs.map(y => `<option value="${y}" ${y === HIST_YEAR ? "selected" : ""}>${y} season</option>`).join("")}</select>
+    <button type="button" class="hbtn" data-hy="${HIST_YEAR + 1}" ${HIST_YEAR >= last ? "disabled" : ""} aria-label="Later season">›</button>
+  </div></section><div id="hist-body" style="display:flex;flex-direction:column;gap:20px"><div class="empty">Loading the ${HIST_YEAR} season...</div></div>`;
+}
+function histGo(y){ HIST_YEAR = y; render(); }
+document.addEventListener("click", e => { const b = e.target.closest(".hbtn"); if (b && !b.disabled) histGo(+b.dataset.hy); if (e.target.id === "hist-retry") histLoad(HIST_YEAR); });
+document.addEventListener("change", e => { if (e.target.id === "hist-year") histGo(+e.target.value); });
+
+async function jget(path){
+  for (let i = 0; i < 4; i++){
+    const r = await fetch("https://api.jolpi.ca/ergast/f1/" + path);
+    if (r.status === 429){ await sleep(2000 * (i + 1)); continue; }
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return (await r.json()).MRData;
+  }
+  throw new Error("too many requests, wait a minute");
+}
+async function jall(path, key){
+  const out = {}; let off = 0, total = 1;
+  while (off < total){
+    const m = await jget(`${path}/?limit=100&offset=${off}`); total = +m.total;
+    for (const r of m.RaceTable.Races) (out[r.round] ||= {...r, [key]: []})[key].push(...(r[key] || []));
+    off += 100; await sleep(300);
+  }
+  return Object.values(out).sort((a, b) => a.round - b.round);
+}
+async function histLoad(y){
+  const body = $("hist-body"); if (!body) return;
+  let s = HIST[y];
+  if (!s){ try { s = JSON.parse(localStorage.getItem("rl-hist-v1-" + y) || "null"); } catch (_) {} }
+  if (!s){
+    body.innerHTML = `<div class="empty">Loading the ${y} season from Jolpica-F1...</div>`;
+    try {
+      const ds = await jget(`${y}/driverstandings/?limit=100`); await sleep(300);
+      const cs = await jget(`${y}/constructorstandings/?limit=100`); await sleep(300);
+      const races = await jall(`${y}/results`, "Results");
+      const sprints = y >= 2021 ? await jall(`${y}/sprint`, "SprintResults") : [];
+      s = summarize(y, ds, cs, races, sprints);
+      try { localStorage.setItem("rl-hist-v1-" + y, JSON.stringify(s)); } catch (_) {}
+    } catch (e){
+      if (HIST_YEAR === y && $("hist-body")) $("hist-body").innerHTML = `<div class="empty">Couldn't load ${y} from Jolpica-F1 (${esc(e.message)}). <button type="button" class="more-txt" id="hist-retry">Try again</button></div>`;
+      return;
+    }
+  }
+  HIST[y] = s;
+  if (HIST_YEAR !== y || !$("hist-body")) return;
+  $("hist-body").innerHTML = histHTML(s); enhance();
+}
+const fullName = d => d.givenName + " " + d.familyName;
+const isDnf = st => !(st === "Finished" || st === "Lapped" || /^\+/.test(st || ""));
+function summarize(y, ds, cs, races, sprints){
+  const SL = (ds.StandingsTable.StandingsLists || [])[0] || {DriverStandings: []};
+  const drivers = SL.DriverStandings.map(x => ({pos: +x.position || null, pt: x.positionText, name: fullName(x.Driver), code: x.Driver.code || x.Driver.familyName.slice(0, 3).toUpperCase(),
+    team: ((x.Constructors || []).slice(-1)[0] || {}).name || "", pts: +x.points, wins: +x.wins}));
+  const CL = (cs.StandingsTable.StandingsLists || [])[0];
+  const teams = CL ? CL.ConstructorStandings.map(x => ({pos: +x.position || null, name: x.Constructor.name, pts: +x.points, wins: +x.wins})) : [];
+  const R = races.map(r => ({round: +r.round, name: r.raceName, date: r.date, res: r.Results.map(x => ({pos: +x.position, name: fullName(x.Driver), team: x.Constructor.name,
+    grid: +x.grid, pts: +x.points, status: x.status, ms: x.Time ? +x.Time.millis : null}))}));
+  const SP = sprints.map(s => ({round: +s.round, res: s.SprintResults.map(x => ({name: fullName(x.Driver), pts: +x.points}))}));
+  return {y, drivers, teams, nRaces: R.length, stories: storiesFor(y, drivers, teams, R, SP),
+    races: R.map(r => { const w = r.res.find(x => x.pos === 1) || {}; return {round: r.round, name: r.name, date: r.date, winner: w.name || "", team: w.team || "", grid: w.grid}; })};
+}
+/* Stories picked from the results: each candidate gets a score for how unusual it is, top ones win. */
+function storiesFor(y, D, T, R, SP){
+  const out = [], add = (score, kind, title, text) => out.push({score, kind, title, text});
+  const champ = D[0], p2 = D[1], N = R.length;
+  if (!champ || !N) return [];
+  const m = champ.pts - (p2 ? p2.pts : 0);
+  if (p2){
+    if (m === 0) add(100, "title", `Title tied on points`, `${champ.name} and ${p2.name} both finished on ${pts(champ.pts)}. ${champ.name} took it on countback.`);
+    else if (m <= 5) add(96 - m, "title", `Decided by ${pts(m)} point${m === 1 ? "" : "s"}`, `${champ.name} beat ${p2.name} to the title by just ${pts(m)}.`);
+    const moreWins = D.slice(1).find(d => d.wins > champ.wins);
+    if (moreWins) add(84, "upset", `Champion without the most wins`, `${champ.name} won the title with ${champ.wins} win${champ.wins === 1 ? "" : "s"}; ${moreWins.name} won ${moreWins.wins}.`);
+  }
+  if (y >= 1991){   // every result has counted since 1991, so a running total matches the real standings
+    const cum = {}, spBy = {}; SP.forEach(s => spBy[s.round] = s.res);
+    const rmax = Math.max(0, ...R.map(r => Math.max(0, ...r.res.map(x => x.pts)))), smax = Math.max(0, ...SP.map(s => Math.max(0, ...s.res.map(x => x.pts))));
+    let lastLeader = null, changes = 0, clinch = null;
+    R.forEach((r, i) => {
+      r.res.forEach(x => cum[x.name] = (cum[x.name] || 0) + x.pts);
+      (spBy[r.round] || []).forEach(x => cum[x.name] = (cum[x.name] || 0) + x.pts);
+      const order = Object.entries(cum).sort((a, b) => b[1] - a[1]);
+      if (lastLeader && order[0][0] !== lastLeader) changes++;
+      lastLeader = order[0][0];
+      const maxLeft = (N - 1 - i) * rmax + SP.filter(s => s.round > r.round).length * smax;
+      if (!clinch && order[1] && order[0][0] === champ.name && order[0][1] - order[1][1] > maxLeft) clinch = {left: N - 1 - i, name: r.name};
+    });
+    if (clinch && clinch.left === 0 && m > 5) add(88, "title", `Went down to the final race`, `${champ.name} only sealed it at the ${clinch.name}.`);
+    else if (clinch && clinch.left >= 3) add(52 + clinch.left * 4, "title", `Wrapped up with ${clinch.left} races to spare`, `${champ.name} clinched it at the ${clinch.name}.`);
+    if (changes >= 4) add(60 + changes * 3, "lead", `The lead changed hands ${changes} times`, `The championship lead swapped ${changes} times before ${lastLeader} ended on top.`);
+  }
+  const wins = {}; R.forEach(r => { const w = r.res.find(x => x.pos === 1); if (w) wins[w.name] = (wins[w.name] || 0) + 1; });
+  const wl = Object.entries(wins).sort((a, b) => b[1] - a[1]), nw = wl.length;
+  if (wl[0] && wl[0][1] / N >= 0.5) add(70 + 30 * wl[0][1] / N, "dom", `${wl[0][0]} won ${wl[0][1]} of ${N}`, `${Math.round(100 * wl[0][1] / N)}% of the races went to one driver.`);
+  if (nw >= 7) add(66 + nw, "spread", `${nw} different winners`, `Wins were spread across ${nw} drivers: ${wl.slice(0, 4).map(w => w[0].split(" ").slice(-1)[0] + " " + w[1]).join(", ")}${nw > 4 ? " and more" : ""}.`);
+  let back = null; R.forEach(r => { const w = r.res.find(x => x.pos === 1); if (!w) return; const g = w.grid || 99; if (!back || g > back.g) back = {g, w, r}; });
+  if (back && back.g >= 8) add(55 + Math.min(back.g, 25) * 2, "comeback", back.g === 99 ? `Won from the pit lane` : `Won from P${back.g} on the grid`, `${back.w.name} came through to win the ${back.r.name}${back.g === 99 ? " after starting from the pit lane" : ""}.`);
+  let close = null; R.forEach(r => { const a = r.res.find(x => x.pos === 1), b = r.res.find(x => x.pos === 2); if (a && b && a.ms && b.ms){ const g = b.ms - a.ms; if (g > 0 && (!close || g < close.g)) close = {g, a, b, r}; } });
+  if (close && close.g < 1000) add(82 - close.g / 25, "close", `Won by ${(close.g / 1000).toFixed(3)}s`, `${close.a.name} beat ${close.b.name} by ${(close.g / 1000).toFixed(3)} seconds at the ${close.r.name}.`);
+  const started = x => !/qualif|did not start|withdr|not start/i.test(x.status || "");
+  let chaos = null; R.forEach(r => { const st = r.res.filter(started), n = st.filter(x => isDnf(x.status)).length; if (st.length && (!chaos || n > chaos.n)) chaos = {n, r, st: st.length, fin: st.length - n}; });
+  if (chaos && (chaos.fin <= 8 || chaos.n >= chaos.st / 2)) add(58 + chaos.n, "chaos", `Only ${chaos.fin} cars finished`, `${chaos.n} of ${chaos.st} starters didn't make it to the end of the ${chaos.r.name}.`);
+  if (T[0]){
+    const tw = R.filter(r => (r.res.find(x => x.pos === 1) || {}).team === T[0].name).length;
+    const one2 = R.filter(r => { const a = r.res.find(x => x.pos === 1), b = r.res.find(x => x.pos === 2); return a && b && a.team === b.team && a.team === T[0].name; }).length;
+    if (tw / N >= 0.7) add(64 + 20 * tw / N, "team", `${T[0].name} won ${tw} of ${N}`, `The champion team won ${Math.round(100 * tw / N)}% of the races${one2 ? `, ${one2} of them 1-2 finishes` : ""}.`);
+    else if (one2 >= 5) add(56 + one2, "team", `${one2} one-two finishes for ${T[0].name}`, `The champion team locked out the top two ${one2} times.`);
+  }
+  const dn = {}; R.forEach(r => r.res.forEach(x => { if (isDnf(x.status)) dn[x.name] = (dn[x.name] || 0) + 1; }));
+  const worst = Object.entries(dn).sort((a, b) => b[1] - a[1])[0];
+  if (worst && worst[1] >= Math.max(6, N * 0.4)) add(48 + worst[1], "dnf", `${worst[0]} failed to finish ${worst[1]} times`, `The most retirements of anyone that season.`);
+  add(40, "champ", `${champ.name} is champion`, `${pts(champ.pts)} points and ${champ.wins} win${champ.wins === 1 ? "" : "s"} for ${champ.team}${p2 ? `, ${pts(m)} clear of ${p2.name}` : ""}.`);
+  const seen = new Set();
+  return out.sort((a, b) => b.score - a.score).filter(s => !seen.has(s.kind) && seen.add(s.kind)).slice(0, 5);
+}
+function histHTML(s){
+  const c = s.drivers[0], t = s.teams[0], p2 = s.drivers[1];
+  const web = ((DATA.stories || {})[s.y] || []).slice(0, 2);
+  const webTitle = web.some(x => /title|champion/i.test(x.title));   // a researched title story makes the auto one redundant
+  const auto = s.stories.filter(x => !(web.length && x.kind === "champ") && !(webTitle && x.kind === "title")).slice(0, 5 - web.length);
+  let h = `<section data-fixed="1"><div class="tcard"><span class="label">${s.y} champions <b style="color:var(--red)">//</b> ${s.nRaces} races</span>
+    <div class="verdict"><b>Drivers:</b> ${esc(c ? c.name : "n/a")}${c ? ` (${esc(c.team)}), ${pts(c.pts)} pts, ${c.wins} win${c.wins === 1 ? "" : "s"}` : ""}</div>
+    <div class="verdict"><b>Constructors:</b> ${t ? esc(t.name) + ", " + pts(t.pts) + " pts" : "not awarded until 1958"}</div>
+    ${c && p2 ? `<div class="note">${esc(c.name)} beat ${esc(p2.name)} by ${pts(c.pts - p2.pts)} point${c.pts - p2.pts === 1 ? "" : "s"}.</div>` : ""}</div></section>`;
+  h += `<section data-fixed="1"><div class="head"><h2>Biggest stories</h2><span class="note">${s.y}</span></div><ol class="stories">
+    ${web.map(x => `<li class="web"><b>${esc(x.title)}</b><span>${esc(x.text)}</span><small>Researched · <a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.src)}</a></small></li>`).join("")}
+    ${auto.map(x => `<li><b>${esc(x.title)}</b><span>${esc(x.text)}</span><small>From the numbers</small></li>`).join("")}</ol>
+    <div class="note">Red-edged stories were researched and link to their source. The rest are picked automatically from the season's results (title margin, dominance, comebacks, close finishes, chaos), so they show what the numbers say, not off-track drama.</div></section>`;
+  h += `<section id="hd-sec"><div class="head"><h2>Drivers</h2><span class="note">Final standings</span></div><div class="tbl-wrap"><table>
+    <thead><tr><th>#</th><th class="l">Driver</th><th>Pts</th><th>Wins</th></tr></thead><tbody>
+    ${s.drivers.map(d => `<tr class="${d.pos === 1 ? "p1 champ" : ""}"><td class="pos">${esc(d.pos || d.pt)}</td><td class="l drv"><span class="full">${esc(d.name)}</span><span class="sur">${esc(d.name.split(" ").slice(-1)[0])}</span><small>${esc(d.team)}</small></td><td class="n"><b>${pts(d.pts)}</b></td><td class="n">${d.wins}</td></tr>`).join("")}
+    </tbody></table></div>${s.y < 1991 ? `<div class="note">Before 1991 only a driver's best results counted, so some totals here are lower than the points they actually scored.</div>` : ""}</section>`;
+  h += `<section id="hc-sec"><div class="head"><h2>Constructors</h2><span class="note">${s.teams.length ? "Final standings" : "Started in 1958"}</span></div>
+    ${s.teams.length ? `<div class="tbl-wrap"><table><thead><tr><th>#</th><th class="l">Team</th><th>Pts</th><th>Wins</th></tr></thead><tbody>
+    ${s.teams.map(d => `<tr class="${d.pos === 1 ? "p1 champ" : ""}"><td class="pos">${esc(d.pos || "-")}</td><td class="l drv">${esc(d.name)}</td><td class="n"><b>${pts(d.pts)}</b></td><td class="n">${d.wins}</td></tr>`).join("")}
+    </tbody></table></div>` : `<div class="empty">The constructors' championship began in 1958.</div>`}</section>`;
+  h += `<section id="hr-sec"><div class="head"><h2>Race winners</h2><span class="note">${s.nRaces} races</span></div><div class="list">
+    ${s.races.map(r => `<div class="lrow"><div class="t">R${r.round} ${esc(short(r.name))}<small>${esc(new Date(r.date + "T12:00:00Z").toLocaleDateString("en-US", {month: "short", day: "numeric", timeZone: "UTC"}))}</small></div><div class="r">${esc(r.winner.split(" ").slice(-1)[0])}<small>${esc(r.team)}${r.grid ? " · from P" + r.grid : r.grid === 0 ? " · from pit lane" : ""}</small></div></div>`).join("")}
+  </div></section>`;
+  return h;
+}
+
 /* ================= render + behaviors ================= */
 function render(){
   $("eb-season").textContent = DATA.season;
   document.querySelectorAll(".tabs a").forEach(a => { if (a.dataset.p === PAGE) a.setAttribute("aria-current", "page"); });
-  const v = {next: viewNext, standings: viewStandings, results: viewResults, teammates: viewTeammates}[PAGE];
+  const v = {next: viewNext, standings: viewStandings, results: viewResults, teammates: viewTeammates, history: viewHistory}[PAGE];
   $("view").innerHTML = v ? v() : "";
   enhance(); updLine(); status(); tickRace();
+  if (PAGE === "history") histLoad(HIST_YEAR);
   if (nextSession()?.live) liveStart(); else liveStop();
 }
 document.addEventListener("click", e => {
@@ -527,7 +695,7 @@ const CKEY = "rl-closed-v1-" + PAGE;
 let closedSaved = {}; try { closedSaved = JSON.parse(localStorage.getItem(CKEY) || "{}") || {}; } catch (_) {}
 function enhance(){
   document.querySelectorAll("#view section").forEach((sec, i) => {
-    const head = sec.querySelector(":scope > .head"); if (!head || sec.dataset.fixed === "1") return;
+    const head = sec.querySelector(":scope > .head"); if (!head || sec.dataset.fixed === "1" || head.classList.contains("tog")) return;
     const key = sec.id || ("s" + i);
     const body = document.createElement("div"); body.className = "sec-body";
     [...sec.children].filter(c => c !== head).forEach(c => body.appendChild(c)); sec.appendChild(body);
@@ -618,7 +786,7 @@ async function refresh(){
   try {
     const r = await fetch("data.json?t=" + Date.now(), {cache: "no-store"}); if (!r.ok) return;
     const fresh = await r.json();
-    if (fresh?.status?.checked && fresh.status.checked !== DATA.status?.checked){ DATA = fresh; render(); }
+    if (fresh?.status?.checked && fresh.status.checked !== DATA.status?.checked){ DATA = fresh; if (PAGE === "history"){ updLine(); status(); } else render(); }
     else status();
   } catch (_) {}
 }
