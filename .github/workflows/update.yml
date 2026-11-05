@@ -1,4 +1,4 @@
-# Redline F1 tracker: pulls F1 data, builds the pages, publishes to GitHub Pages.
+# F1 Tracker: pulls F1 data, builds the pages, publishes to GitHub Pages.
 # Wakes every 10 minutes. On race weekends it updates every time; otherwise about once an hour.
 # Free on public repos. No API keys or personal tokens needed.
 name: Update F1 tracker

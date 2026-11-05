@@ -380,7 +380,7 @@ def write_site(data):
         open(os.path.join(OUT, fn), "w", encoding="utf-8", newline="\n").write(html)
     # Teammates moved into Standings: old links forward there
     open(os.path.join(OUT, "teammates.html"), "w", encoding="utf-8").write(
-        '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=standings.html"><title>Redline</title><a href="standings.html">Standings</a>')
+        '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=standings.html"><title>F1 Tracker</title><a href="standings.html">Standings</a>')
     open(os.path.join(OUT, "data.json"), "w", encoding="utf-8").write(json.dumps(data, ensure_ascii=False, separators=(",", ":")))
     hist = os.path.join(HERE, "history")   # saved finished seasons for the History tab
     if os.path.isdir(hist):

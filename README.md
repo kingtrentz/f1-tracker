@@ -1,4 +1,4 @@
-# Redline: unofficial F1 season tracker
+# F1 Tracker (unofficial fan project)
 
 Live site: https://kingtrentz.github.io/f1-tracker/
 

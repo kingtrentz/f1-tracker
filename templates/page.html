@@ -1,12 +1,12 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex">
-<title>__TITLE__ | Redline F1 Tracker</title>
+<title>__TITLE__ | F1 Tracker</title>
 <meta name="description" content="Unofficial fan-made F1 season tracker: next race countdown, standings, title math, results and teammate battles.">
 <script>try{var t=localStorage.getItem("rl-theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
 <link rel="icon" type="image/svg+xml" href="logo.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
-/* Redline: black header band, red for the things that matter, white or near-black ground underneath. */
+/* F1 Tracker: black header band, red for the things that matter, white or near-black ground underneath. */
 :root{
   --bg:#ffffff;--panel:#f6f4f4;--panel-2:#ece8e8;--line:#e4dfdf;--line-strong:#cfc8c8;
   --ink:#0c0c0d;--muted:#5d585a;--faint:#8c8688;
@@ -53,6 +53,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 auto}
 .brand > div{min-width:0}
 .logo{width:38px;height:38px;flex:none;display:block}
+.logo.emo{display:flex;align-items:center;justify-content:center;font-size:30px;line-height:1;border-radius:9px;background:var(--band-2);border:1px solid var(--band-line);box-shadow:inset 0 -2px 0 var(--red)}
 .eyebrow{font-family:var(--f-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--band-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .eyebrow b{color:var(--red);font-weight:600}
 h1{font-size:23px;line-height:1.05;font-weight:700;letter-spacing:.03em;text-transform:uppercase}
@@ -73,7 +74,7 @@ h1 span{color:var(--red)}
 .tabs a:hover{border-color:var(--red)}
 .tabs a[aria-current="page"]{background:var(--red);border-color:var(--red);color:var(--on-red)}
 .theme-btn{margin-left:auto;flex:none;width:30px;height:30px;border-radius:999px;border:1px solid var(--band-line);background:var(--band-2);color:var(--band-ink);font-size:14px;line-height:1;display:inline-flex;align-items:center;justify-content:center;padding:0}
-@media (max-width:560px){h1{font-size:20px}.cd b{font-size:17px}.logo{width:34px;height:34px}.tabs a{padding:5px 8px;font-size:11px}}
+@media (max-width:560px){h1{font-size:20px}.cd b{font-size:17px}.logo{width:34px;height:34px}.logo.emo{font-size:26px}.tabs a{padding:5px 8px;font-size:11px}}
 @media (max-width:370px){.tabs a{padding:4px 7px;font-size:10.5px}}
 
 /* ===== sections ===== */
@@ -262,8 +263,8 @@ footer a{color:var(--muted)}
 <div class="band"><header>
   <div class="hdr">
     <div class="brand">
-      <img class="logo" src="logo.svg" alt="" width="38" height="38">
-      <div><div class="eyebrow" id="eyebrow">F1 Season Tracker <b>//</b> <span id="eb-season"></span></div><h1>Red<span>line</span></h1></div>
+      <span class="logo emo" aria-hidden="true">🏎️</span>
+      <div><div class="eyebrow" id="eyebrow">Unofficial <b>//</b> <span id="eb-season"></span> season</div><h1>F1 <span>Tracker</span></h1></div>
     </div>
     <div class="cd" id="cd" hidden><span class="label" id="cd-l">Next</span><b id="cd-t">--:--:--</b><small id="cd-s"></small></div>
   </div>
