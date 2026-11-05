@@ -10,6 +10,7 @@ built by kingtrents⚡️ x claude 🫡
 - Race weekends (12 hours before FP1 until 12 hours after the race): updates every run.
 - Other times: about once an hour.
 - `build.py` pulls Jolpica-F1 + OpenF1 (no keys), builds 4 pages + `data.json`, and GitHub Pages publishes them.
+- Tabs: Next Race, Standings (with teammate H2H), Results, History.
 - Pages pull the newest `data.json` every 2 minutes while open.
 - Once a week it commits `heartbeat.txt` so GitHub doesn't pause the schedule (it pauses public-repo schedules after 60 quiet days).
 - When a season ends it switches to the next calendar on its own once Jolpica-F1 publishes it.

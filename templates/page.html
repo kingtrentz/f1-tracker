@@ -215,7 +215,13 @@ tr.out td{color:var(--faint)}
 
 .sur{display:none}
 @media (max-width:560px){.hide-sm{display:none}td.drv small{display:none}.full{display:none}.sur{display:inline}th,td{padding:7px 6px}}
-@media (max-width:560px){.tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) 30px;gap:4px}.tabs a{text-align:center;padding:5px 2px}.theme-btn{margin-left:0}}
+@media (max-width:560px){.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) 30px;gap:4px}.tabs a{text-align:center;padding:5px 2px}.theme-btn{margin-left:0}}
+.kings{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.king{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:12.5px}
+.king b{font-family:var(--f-display);font-weight:600}
+.king small{font-family:var(--f-mono);font-size:10.5px;color:var(--muted)}
+.king.k1{background:var(--band);color:var(--band-ink);border-color:var(--band);box-shadow:inset 0 -2px 0 var(--red)}
+.king.k1 small{color:var(--band-muted)}
 /* history */
 .hist-pick{display:grid;grid-template-columns:40px minmax(0,1fr) 40px;gap:8px}
 .hist-pick select{font-family:var(--f-display);font-weight:600;font-size:16px;padding:8px 10px;border-radius:8px;border:1px solid var(--band-line);background:var(--band);color:var(--band-ink);min-width:0}
@@ -255,7 +261,7 @@ footer a{color:var(--muted)}
   <div class="upd num" id="upd"></div>
   <div class="stat-line" id="stat-line" hidden></div>
   <nav class="tabs" aria-label="Pages">
-    <a href="index.html" data-p="next"><span class="full">Next Race</span><span class="sur">Next</span></a><a href="standings.html" data-p="standings"><span class="full">Standings</span><span class="sur">Points</span></a><a href="results.html" data-p="results">Results</a><a href="teammates.html" data-p="teammates"><span class="full">Teammates</span><span class="sur">H2H</span></a><a href="history.html" data-p="history">History</a>
+    <a href="index.html" data-p="next"><span class="full">Next Race</span><span class="sur">Next</span></a><a href="standings.html" data-p="standings"><span class="full">Standings</span><span class="sur">Points</span></a><a href="results.html" data-p="results">Results</a><a href="history.html" data-p="history">History</a>
     <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch theme">🌙</button>
   </nav>
 </header></div>
@@ -421,6 +427,7 @@ function viewStandings(){
   h += `</tbody></table></div><div class="note">A team can score at most ${esc(pts(43))} a race (a 1-2) and ${esc(pts(15))} a sprint, so ${esc(pts(T.teams.maxLeft))} is still on the table.</div></section>`;
   h += mathSection(T.drivers, "drv-math", "Drivers' title path");
   h += mathSection(T.teams, "con-math", "Constructors' title path");
+  h += viewTeammates();
   return h;
 }
 const stateLabel = s => ({champ: "Champion", leader: "Leads", alive: "In it", tie: "Tie only", out: "Out"}[s] || "");
@@ -491,13 +498,14 @@ function resTable(rows, sprint){
 
 function viewTeammates(){
   const B = DATA.teammates || [];
-  if (!B.length) return `<div class="empty">Teammate battles start after the first race.</div>`;
+  if (!B.length) return "";
   const kings = [...B].map(b => ({b, who: b.leader === 0 ? b.a : b.b})).sort((x, y) => y.b.dom - x.b.dom).slice(0, 3);
-  let h = `<section data-fixed="1"><div class="head"><h2>Teammate kings 👑</h2><span class="note">Most one-sided garages</span></div><div class="podium">${kings.map((k, i) => {
+  const kingsRow = `<div class="kings"><span class="label">Kings 👑</span>${kings.map((k, i) => {
     const w = k.b.leader, q = k.b.q[w], r = k.b.r[w], nq = k.b.q[0] + k.b.q[1], nr = k.b.r[0] + k.b.r[1];
-    return `<div class="pod ${i === 0 ? "p1" : ""}"><span class="medal">${["🥇", "🥈", "🥉"][i]}</span><span class="who">${esc(k.who.code)}</span><span class="tag">${esc(k.b.name)}</span><small>${k.b.dom}% of duels<br>Q ${q}-${nq - q} · R ${r}-${nr - r}</small></div>`;
-  }).join("")}</div><div class="note">Duels = qualifying head-to-heads plus race head-to-heads. A race only counts when both drivers are classified, so one car breaking down doesn't hand the other a win.</div></section>`;
-  h += `<section data-fixed="1" id="tm-sec" class="tm"><div class="head"><h2>Head to head</h2><span class="note">Constructor order. Tap a team</span></div><div class="list">`;
+    return `<span class="king ${i === 0 ? "k1" : ""}" title="Q ${q}-${nq - q} · R ${r}-${nr - r}">${["🥇", "🥈", "🥉"][i]} <b>${esc(k.who.code)}</b> <small>${k.b.dom}%</small></span>`;
+  }).join("")}</div>`;
+  let h = "";
+  h += `<section id="tm-sec" class="tm"><div class="head"><h2>Teammate H2H</h2><span class="note">Tap a team</span></div>${kingsRow}<div class="list">`;
   for (const b of B){
     const key = "t" + b.id, open = OPEN.has(key), ca = color(b.a), cb = color(b.b);
     h += `<button class="xbar" type="button" data-x="${key}" aria-expanded="${open}" style="display:grid;grid-template-columns:minmax(0,1fr) 14px;padding:10px 11px">
@@ -512,7 +520,7 @@ function viewTeammates(){
         </tbody></table></div><div class="note">Red = won that duel. Finishing letters: R retired, D disqualified, W withdrew, N not classified.</div>
       </div>`;
   }
-  h += `</div><div class="note">Black bar = the first driver named, red bar = the second. Points include sprints.</div></section>`;
+  h += `</div><div class="note">Kings = most one-sided garages: share of quali and race duels won (a race only counts when both cars are classified). Black bar = the first driver named, red bar = the second. Points include sprints.</div></section>`;
   return h;
 }
 function duel(label, a, b, isPts){
@@ -560,7 +568,7 @@ async function jall(path, key){
 async function histLoad(y){
   const body = $("hist-body"); if (!body) return;
   let s = HIST[y];
-  if (!s){ try { s = JSON.parse(localStorage.getItem("rl-hist-v1-" + y) || "null"); } catch (_) {} }
+  if (!s){ try { s = JSON.parse(localStorage.getItem("rl-hist-v2-" + y) || "null"); } catch (_) {} }
   if (!s){   // saved copy on this site first (instant), live API as the fallback
     try { const r = await fetch(`history/${y}.json`); if (r.ok){ const d = await r.json(); s = summarize(y, d.ds, d.cs, d.races, d.sprints); } } catch (_) {}
   }
@@ -572,7 +580,7 @@ async function histLoad(y){
       const races = await jall(`${y}/results`, "Results");
       const sprints = y >= 2021 ? await jall(`${y}/sprint`, "SprintResults") : [];
       s = summarize(y, ds, cs, races, sprints);
-      try { localStorage.setItem("rl-hist-v1-" + y, JSON.stringify(s)); } catch (_) {}
+      try { localStorage.setItem("rl-hist-v2-" + y, JSON.stringify(s)); } catch (_) {}
     } catch (e){
       if (HIST_YEAR === y && $("hist-body")) $("hist-body").innerHTML = `<div class="empty">Couldn't load ${y} from Jolpica-F1 (${esc(e.message)}). <button type="button" class="more-txt" id="hist-retry">Try again</button></div>`;
       return;
@@ -593,8 +601,33 @@ function summarize(y, ds, cs, races, sprints){
   const R = races.map(r => ({round: +r.round, name: r.raceName, date: r.date, res: r.Results.map(x => ({pos: +x.position, name: fullName(x.Driver), team: x.Constructor.name,
     grid: +x.grid, pts: +x.points, status: x.status, ms: x.Time ? +x.Time.millis : null}))}));
   const SP = sprints.map(s => ({round: +s.round, res: s.SprintResults.map(x => ({name: fullName(x.Driver), pts: +x.points}))}));
-  return {y, drivers, teams, nRaces: R.length, stories: storiesFor(y, drivers, teams, R, SP),
+  return {y, drivers, teams, nRaces: R.length, stories: storiesFor(y, drivers, teams, R, SP), tm: histTeammates(R, SP, teams),
     races: R.map(r => { const w = r.res.find(x => x.pos === 1) || {}; return {round: r.round, name: r.name, date: r.date, winner: w.name || "", team: w.team || "", grid: w.grid}; })};
+}
+/* Teammate battles for a past season: grid slot (qualifying plus penalties, the only start data back to 1950),
+   race finish when both are classified, and points scored. */
+function histTeammates(R, SP, T){
+  const teams = {};
+  R.forEach(r => r.res.forEach(x => { const t = teams[x.team] ||= {name: x.team, drivers: {}}; const d = t.drivers[x.name] ||= {name: x.name, races: 0, pts: 0}; d.races++; d.pts += x.pts; }));
+  SP.forEach(sp => sp.res.forEach(x => { const t = Object.values(teams).find(t => t.drivers[x.name]); if (t) t.drivers[x.name].pts += x.pts; }));
+  const order = {}; T.forEach((t, i) => order[t.name] = i);
+  const out = [];
+  for (const t of Object.values(teams)){
+    const ds = Object.values(t.drivers).sort((a, b) => b.races - a.races || b.pts - a.pts);
+    if (ds.length < 2) continue;
+    const [a, b] = ds, bt = {name: t.name, a, b, others: ds.slice(2).map(d => d.name + " (" + d.races + ")"), g: [0, 0], r: [0, 0], rounds: [], pts: [a.pts, b.pts]};
+    R.forEach(r => {
+      const xa = r.res.find(x => x.name === a.name && x.team === t.name), xb = r.res.find(x => x.name === b.name && x.team === t.name);
+      if (!xa || !xb) return;
+      const ga = xa.grid || 99, gb = xb.grid || 99;
+      const rec = {round: r.round, name: r.name, ga: xa.grid, gb: xb.grid, fa: isDnf(xa.status) ? "R" : xa.pos, fb: isDnf(xb.status) ? "R" : xb.pos, g: null, r: null};
+      if (ga !== gb){ rec.g = ga < gb ? 0 : 1; bt.g[rec.g]++; }
+      if (!isDnf(xa.status) && !isDnf(xb.status) && xa.pos !== xb.pos){ rec.r = xa.pos < xb.pos ? 0 : 1; bt.r[rec.r]++; }
+      bt.rounds.push(rec);
+    });
+    if (bt.rounds.length) out.push(bt);
+  }
+  return out.sort((x, y) => (order[x.name] ?? 99) - (order[y.name] ?? 99) || (y.pts[0] + y.pts[1]) - (x.pts[0] + x.pts[1]));
 }
 /* Stories picked from the results: each candidate gets a score for how unusual it is, top ones win. */
 function storiesFor(y, D, T, R, SP){
@@ -670,6 +703,25 @@ function histHTML(s){
     ${s.teams.length ? `<div class="tbl-wrap"><table><thead><tr><th>#</th><th class="l">Team</th><th>Pts</th><th>Wins</th></tr></thead><tbody>
     ${s.teams.map(d => `<tr class="${d.pos === 1 ? "p1 champ" : ""}"><td class="pos">${esc(d.pos || "-")}</td><td class="l drv">${esc(d.name)}</td><td class="n"><b>${pts(d.pts)}</b></td><td class="n">${d.wins}</td></tr>`).join("")}
     </tbody></table></div>` : `<div class="empty">The constructors' championship began in 1958.</div>`}</section>`;
+  if ((s.tm || []).length){
+    const sur = n => n.split(" ").slice(-1)[0];
+    h += `<section id="htm-sec" class="tm"><div class="head"><h2>Teammate battles</h2><span class="note">${s.tm.length} teams. Tap a team</span></div><div class="list">`;
+    s.tm.forEach((b, i) => {
+      const key = "h" + s.y + "-" + i, open = OPEN.has(key);
+      h += `<button class="xbar" type="button" data-x="${key}" aria-expanded="${open}" style="display:grid;grid-template-columns:minmax(0,1fr) 14px;padding:10px 11px">
+        <span style="display:grid;gap:5px;min-width:0"><span class="tm-names"><span>${esc(sur(b.a.name))} <span class="label" style="font-size:9px">${esc(b.name)}</span></span><span>${esc(sur(b.b.name))}</span></span>
+        ${duel("Grid", b.g[0], b.g[1])}${duel("Race", b.r[0], b.r[1])}${duel("Points", b.pts[0], b.pts[1], true)}</span></button>
+        <div class="xdetail" id="x-${key}" ${open ? "" : "hidden"}>
+          <div class="facts"><div><span>${esc(b.a.name)}</span><b>${b.a.races} races, ${pts(b.pts[0])} pts</b></div><div><span>${esc(b.b.name)}</span><b>${b.b.races} races, ${pts(b.pts[1])} pts</b></div></div>
+          ${b.others.length ? `<div class="note">Also drove for ${esc(b.name)}: ${esc(b.others.join(", "))}. Duels only use races where both main drivers raced for the team.</div>` : ""}
+          <div class="tbl-wrap"><table><thead><tr><th>Rd</th><th class="l">Race</th><th>Grid ${esc(sur(b.a.name).slice(0, 3).toUpperCase())}</th><th>Grid ${esc(sur(b.b.name).slice(0, 3).toUpperCase())}</th><th>${esc(sur(b.a.name).slice(0, 3).toUpperCase())}</th><th>${esc(sur(b.b.name).slice(0, 3).toUpperCase())}</th></tr></thead><tbody>
+          ${b.rounds.map(x => `<tr><td class="n">${x.round}</td><td class="l">${esc(short(x.name))}</td><td class="n" style="${x.g === 0 ? "color:var(--red);font-weight:600" : ""}">${x.ga || "PL"}</td><td class="n" style="${x.g === 1 ? "color:var(--red);font-weight:600" : ""}">${x.gb || "PL"}</td>
+            <td class="n" style="${x.r === 0 ? "color:var(--red);font-weight:600" : ""}">${esc(x.fa)}</td><td class="n" style="${x.r === 1 ? "color:var(--red);font-weight:600" : ""}">${esc(x.fb)}</td></tr>`).join("")}
+          </tbody></table></div>
+        </div>`;
+    });
+    h += `</div><div class="note">Grid = starting slot (qualifying plus any penalties); full qualifying data isn't available for older seasons, so this is the fair comparison back to 1950. Race duels only count when both cars were classified. Points are points scored${s.y < 1991 ? " (before 1991 not all of them counted toward the title)" : ""}. Black bar = first driver named, red = second. Red in the table = won that duel. R = didn't finish, PL = pit lane or didn't start.</div></section>`;
+  }
   h += `<section id="hr-sec"><div class="head"><h2>Race winners</h2><span class="note">${s.nRaces} races</span></div><div class="list">
     ${s.races.map(r => `<div class="lrow"><div class="t">R${r.round} ${esc(short(r.name))}<small>${esc(new Date(r.date + "T12:00:00Z").toLocaleDateString("en-US", {month: "short", day: "numeric", timeZone: "UTC"}))}</small></div><div class="r">${esc(r.winner.split(" ").slice(-1)[0])}<small>${esc(r.team)}${r.grid ? " · from P" + r.grid : r.grid === 0 ? " · from pit lane" : ""}</small></div></div>`).join("")}
   </div></section>`;
