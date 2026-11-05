@@ -222,6 +222,11 @@ tr.out td{color:var(--faint)}
 .king small{font-family:var(--f-mono);font-size:10.5px;color:var(--muted)}
 .king.k1{background:var(--band);color:var(--band-ink);border-color:var(--band);box-shadow:inset 0 -2px 0 var(--red)}
 .king.k1 small{color:var(--band-muted)}
+.tdot{display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;margin-right:5px;vertical-align:1px;animation:ping 1.6s infinite}
+.tabs a.live-tab:not([aria-current="page"]){border-color:var(--red);color:var(--red)}
+.loadmore{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--line-strong);background:var(--panel);color:var(--ink);font-family:var(--f-display);font-weight:600;font-size:14px;display:flex;justify-content:center;align-items:baseline;gap:8px}
+.loadmore:hover{border-color:var(--red)}
+.loadmore small{font-family:var(--f-mono);font-size:10.5px;font-weight:500;color:var(--muted)}
 /* history */
 .hist-pick{display:grid;grid-template-columns:40px minmax(0,1fr) 40px;gap:8px}
 .hist-pick select{font-family:var(--f-display);font-weight:600;font-size:16px;padding:8px 10px;border-radius:8px;border:1px solid var(--band-line);background:var(--band);color:var(--band-ink);min-width:0}
@@ -456,6 +461,8 @@ function mathSection(t, id, title){
 }
 
 const OPEN = new Set();
+let RES_SHOWN = 5;   // Results tab: newest 5 first, "Load more" adds 5 at a time
+document.addEventListener("click", e => { if (e.target.closest("#res-more")){ RES_SHOWN += 5; render(); } });
 function viewResults(){
   const R = DATA.results || [];
   if (!R.length) return `<div class="empty">No races run yet in ${DATA.season}.</div>`;
@@ -466,7 +473,8 @@ function viewResults(){
     <div class="kpi"><span class="label">Most wins</span><b>${esc(top ? top[0].split(" ").slice(-1)[0] : "-")}</b><small>${top ? top[1] + " wins" : ""}</small></div></div>`;
   h += liveBlock();
   h += `<section data-fixed="1" id="res-sec"><div class="head"><h2>Every race</h2><span class="note">Newest first. Tap a race</span></div><div class="list">`;
-  for (const r of [...R].reverse()){
+  const shown = [...R].reverse().slice(0, RES_SHOWN), left = R.length - shown.length;
+  for (const r of shown){
     const w = r.results[0], pole = r.quali[0], fl = r.results.find(x => x.fl), dnf = r.results.filter(x => x.dnf);
     const key = "r" + r.round, open = OPEN.has(key);
     h += `<button class="xbar" type="button" data-x="${key}" aria-expanded="${open}"><span class="k">R${r.round}</span><span class="t">${esc(short(r.name))}<small>${esc(ctDay(r.date))}${r.sprint.length ? " · Sprint weekend" : ""}</small></span><span class="r">${dot(color(w))}${esc(w ? w.code : "")}<small>winner</small></span></button>
@@ -479,7 +487,7 @@ function viewResults(){
         ${r.sprint.length ? `<div class="label">Sprint</div>${resTable(r.sprint, true)}` : ""}
       </div>`;
   }
-  h += `</div><div class="note">+/- compares grid slot to finish (a pit lane start counts as the back of the grid). DNF = didn't finish or wasn't classified, including DNS and DSQ. Purple badge = fastest lap.</div></section>`;
+  h += `</div>${left > 0 ? `<button type="button" class="loadmore" id="res-more">Load ${Math.min(5, left)} more <small>${left} earlier race${left === 1 ? "" : "s"}</small></button>` : ""}<div class="note">+/- compares grid slot to finish (a pit lane start counts as the back of the grid). DNF = didn't finish or wasn't classified, including DNS and DSQ. Purple badge = fastest lap.</div></section>`;
   return h;
 }
 function mover(rows){
@@ -811,7 +819,23 @@ function tickRace(){
   else if (ms > -120 * 60000) el.innerHTML = "<em>Race on now</em>";
   else el.textContent = "Finished";
 }
-setInterval(() => { tickHeader(); tickRace(); }, 1000); tickHeader();
+/* race weekends: the Next Race tab shows the session that's on or coming up (FP1, Quali, Race...) */
+const TAB_SHORT = {"Practice 1": "FP1", "Practice 2": "FP2", "Practice 3": "FP3", "Sprint Qualifying": "SQ", "Sprint": "Sprint", "Qualifying": "Quali", "Race": "Race"};
+function tickTab(){
+  const a = document.querySelector('.tabs a[data-p="next"]'); if (!a) return;
+  const n = DATA.next, ns = nextSession(), now = Date.now();
+  const weekend = n && ns && now >= new Date(n.sessions[0].start).getTime() - 12 * 3600 * 1000;
+  const key = weekend ? (ns.live ? "L" : "N") + ns.s.name : "off";
+  if (a.dataset.k === key) return;
+  a.dataset.k = key;
+  if (!weekend){ a.innerHTML = '<span class="full">Next Race</span><span class="sur">Next</span>'; a.classList.remove("live-tab"); return; }
+  const sh = TAB_SHORT[ns.s.name] || ns.s.name;
+  a.innerHTML = ns.live ? `<i class="tdot"></i><span class="full">Live: ${esc(sh)}</span><span class="sur">${esc(sh)}</span>`
+                        : `<span class="full">Next: ${esc(sh)}</span><span class="sur">${esc(sh)}</span>`;
+  a.classList.toggle("live-tab", ns.live);
+  a.setAttribute("aria-label", (ns.live ? "Live now: " : "Next session: ") + ns.s.name);
+}
+setInterval(() => { tickHeader(); tickRace(); tickTab(); }, 1000); tickHeader(); tickTab();
 
 /* race day: while a session is on, ask OpenF1 directly from the browser every minute.
    The free OpenF1 feed posts data after a session, not in real time, so this mostly shows what it has, honestly labeled. */
