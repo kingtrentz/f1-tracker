@@ -1,0 +1,75 @@
+# Redline F1 tracker: pulls F1 data, builds the pages, publishes to GitHub Pages.
+# Wakes every 10 minutes. On race weekends it updates every time; otherwise about once an hour.
+# Free on public repos. No API keys or personal tokens needed.
+name: Update F1 tracker
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:        # "Run workflow" button on the Actions tab forces an update
+  push:
+    branches: [main]
+
+permissions:
+  contents: write           # weekly keep-alive commit (GitHub pauses schedules after 60 quiet days)
+  pages: write
+  id-token: write
+
+concurrency:
+  group: f1-tracker
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      run: ${{ steps.gate.outputs.run }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Is an update due?
+        id: gate
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then echo "run=true" >> "$GITHUB_OUTPUT"; echo "Manual or push run: updating"; else python3 build.py --gate; fi
+      - name: Weekly keep-alive commit
+        if: github.event_name == 'schedule'
+        run: |
+          last=$(git log -1 --format=%ct)
+          if [ $(( $(date +%s) - last )) -gt 604800 ]; then
+            date -u +"%Y-%m-%dT%H:%M:%SZ" > heartbeat.txt
+            git config user.name "f1-tracker-bot"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add heartbeat.txt
+            git commit -m "Keep-alive (stops GitHub pausing the schedule)"
+            git push
+          fi
+
+  update:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Pull data and build pages
+        run: python3 build.py
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+      - name: Publish to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v5
+
+      - name: Ping healthchecks.io (optional)
+        if: always()
+        env:
+          HC: ${{ secrets.HEALTHCHECK_URL }}
+        run: |
+          [ -z "$HC" ] && exit 0
+          if [ "${{ job.status }}" = "success" ]; then curl -fsS -m 10 "$HC" >/dev/null || true; else curl -fsS -m 10 "$HC/fail" >/dev/null || true; fi
