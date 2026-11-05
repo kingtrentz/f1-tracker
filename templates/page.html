@@ -11,7 +11,7 @@
   --bg:#ffffff;--panel:#f6f4f4;--panel-2:#ece8e8;--line:#e4dfdf;--line-strong:#cfc8c8;
   --ink:#0c0c0d;--muted:#5d585a;--faint:#8c8688;
   --red:#d9142b;--red-ink:#b30f23;--red-soft:#fdebed;--red-line:#f3c3c9;--on-red:#ffffff;
-  --band:#0c0c0d;--band-2:#18181b;--band-ink:#f4f1f1;--band-muted:#a8a2a4;--band-line:#2c2c31;
+  --stripe:rgba(217,20,43,.10);--band:#f6f4f4;--band-2:#ffffff;--band-ink:#0c0c0d;--band-muted:#5d585a;--band-line:#dcd5d5;
   --up:#16824a;--up-soft:#e2f3e9;--up-line:#bfe3cc;--down:#c2410c;--down-soft:#fdeee5;--down-line:#f4cdb5;
   --live:#d9142b;--gold:#b88a00;
   --f-display:"Chakra Petch","Segoe UI",system-ui,sans-serif;
@@ -23,14 +23,14 @@
   --bg:#0a0a0b;--panel:#141416;--panel-2:#1c1c1f;--line:#26262a;--line-strong:#3a3a40;
   --ink:#f2eeee;--muted:#aaa3a5;--faint:#777174;
   --red:#ff2a44;--red-ink:#ff5a6c;--red-soft:#2a0c11;--red-line:#5c1822;--on-red:#ffffff;
-  --band:#000000;--band-2:#121214;--band-ink:#f4f1f1;--band-muted:#9d979a;--band-line:#26262b;
+  --stripe:rgba(217,20,43,.22);--band:#000000;--band-2:#121214;--band-ink:#f4f1f1;--band-muted:#9d979a;--band-line:#26262b;
   --up:#45c27f;--up-soft:#0f2519;--up-line:#1f4a33;--down:#ff8a4c;--down-soft:#2a160b;--down-line:#5a3218;
   --live:#ff2a44;--gold:#e7b93a;color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0a0a0b;--panel:#141416;--panel-2:#1c1c1f;--line:#26262a;--line-strong:#3a3a40;
   --ink:#f2eeee;--muted:#aaa3a5;--faint:#777174;
   --red:#ff2a44;--red-ink:#ff5a6c;--red-soft:#2a0c11;--red-line:#5c1822;--on-red:#ffffff;
-  --band:#000000;--band-2:#121214;--band-ink:#f4f1f1;--band-muted:#9d979a;--band-line:#26262b;
+  --stripe:rgba(217,20,43,.22);--band:#000000;--band-2:#121214;--band-ink:#f4f1f1;--band-muted:#9d979a;--band-line:#26262b;
   --up:#45c27f;--up-soft:#0f2519;--up-line:#1f4a33;--down:#ff8a4c;--down-soft:#2a160b;--down-line:#5a3218;
   --live:#ff2a44;--gold:#e7b93a;color-scheme:dark}
 *{box-sizing:border-box}
@@ -108,7 +108,7 @@ section.closed > .sec-body{display:none}
 
 /* ===== hero (next race) ===== */
 .hero{background:var(--band);color:var(--band-ink);border-radius:10px;padding:12px 14px;display:grid;gap:8px;position:relative;overflow:hidden;border:1px solid var(--band-line)}
-.hero::after{content:"";position:absolute;right:-30px;top:0;bottom:0;width:120px;background:repeating-linear-gradient(115deg,transparent 0 14px,rgba(217,20,43,.22) 14px 22px);pointer-events:none}
+.hero::after{content:"";position:absolute;right:-30px;top:0;bottom:0;width:120px;background:repeating-linear-gradient(115deg,transparent 0 14px,var(--stripe) 14px 22px);pointer-events:none}
 .hero > *{position:relative;z-index:1}
 .hero .label{color:var(--band-muted)}
 .hero .label b{color:var(--red);font-weight:600}
