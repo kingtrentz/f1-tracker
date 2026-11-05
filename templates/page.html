@@ -1,0 +1,640 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex">
+<title>__TITLE__ | Redline F1 Tracker</title>
+<meta name="description" content="Unofficial fan-made F1 season tracker: next race countdown, standings, title math, results and teammate battles.">
+<script>try{var t=localStorage.getItem("rl-theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Redline: black header band, red for the things that matter, white or near-black ground underneath. */
+:root{
+  --bg:#ffffff;--panel:#f6f4f4;--panel-2:#ece8e8;--line:#e4dfdf;--line-strong:#cfc8c8;
+  --ink:#0c0c0d;--muted:#5d585a;--faint:#8c8688;
+  --red:#d9142b;--red-ink:#b30f23;--red-soft:#fdebed;--red-line:#f3c3c9;--on-red:#ffffff;
+  --band:#0c0c0d;--band-2:#18181b;--band-ink:#f4f1f1;--band-muted:#a8a2a4;--band-line:#2c2c31;
+  --up:#16824a;--up-soft:#e2f3e9;--up-line:#bfe3cc;--down:#c2410c;--down-soft:#fdeee5;--down-line:#f4cdb5;
+  --live:#d9142b;--gold:#b88a00;
+  --f-display:"Chakra Petch","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0a0a0b;--panel:#141416;--panel-2:#1c1c1f;--line:#26262a;--line-strong:#3a3a40;
+  --ink:#f2eeee;--muted:#aaa3a5;--faint:#777174;
+  --red:#ff2a44;--red-ink:#ff5a6c;--red-soft:#2a0c11;--red-line:#5c1822;--on-red:#ffffff;
+  --band:#000000;--band-2:#121214;--band-ink:#f4f1f1;--band-muted:#9d979a;--band-line:#26262b;
+  --up:#45c27f;--up-soft:#0f2519;--up-line:#1f4a33;--down:#ff8a4c;--down-soft:#2a160b;--down-line:#5a3218;
+  --live:#ff2a44;--gold:#e7b93a;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0a0a0b;--panel:#141416;--panel-2:#1c1c1f;--line:#26262a;--line-strong:#3a3a40;
+  --ink:#f2eeee;--muted:#aaa3a5;--faint:#777174;
+  --red:#ff2a44;--red-ink:#ff5a6c;--red-soft:#2a0c11;--red-line:#5c1822;--on-red:#ffffff;
+  --band:#000000;--band-2:#121214;--band-ink:#f4f1f1;--band-muted:#9d979a;--band-line:#26262b;
+  --up:#45c27f;--up-soft:#0f2519;--up-line:#1f4a33;--down:#ff8a4c;--down-soft:#2a160b;--down-line:#5a3218;
+  --live:#ff2a44;--gold:#e7b93a;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--ink)}
+body{margin:0;font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-text-size-adjust:100%}
+.wrap{max-width:820px;margin:0 auto;padding-block:16px 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--f-display);font-weight:600;margin:0;letter-spacing:.01em;text-wrap:balance}
+h2{font-size:18px}
+.num{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--f-mono)}
+.label{font-family:var(--f-mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:500}
+.note{font-size:12.5px;color:var(--muted)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+
+/* ===== header band ===== */
+.band{background:var(--band);color:var(--band-ink);border-bottom:3px solid var(--red);padding-top:env(safe-area-inset-top,0px)}
+.band header{max-width:820px;margin:0 auto;padding:12px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:3px}
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 auto}
+.brand > div{min-width:0}
+.logo{width:38px;height:38px;flex:none;display:block}
+.eyebrow{font-family:var(--f-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--band-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.eyebrow b{color:var(--red);font-weight:600}
+h1{font-size:23px;line-height:1.05;font-weight:700;letter-spacing:.03em;text-transform:uppercase}
+h1 span{color:var(--red)}
+.cd{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:1px;text-align:right}
+.cd .label{font-size:9.5px;letter-spacing:.1em;color:var(--red);font-weight:600}
+.cd b{font-family:var(--f-mono);font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1;color:var(--band-ink)}
+.cd small{font-family:var(--f-mono);font-size:9.5px;color:var(--band-muted)}
+.cd.live .label::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--red);margin-right:5px;vertical-align:1px;animation:ping 1.6s infinite}
+.upd{display:flex;flex-wrap:wrap;align-items:center;gap:2px 14px;font-family:var(--f-mono);font-size:11px;color:var(--band-muted);margin-top:2px}
+.upd b{color:var(--band-ink);font-weight:600}
+.upd span:first-child::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--red);margin-right:6px;vertical-align:1px;animation:ping 2.4s infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(217,20,43,.55)}70%{box-shadow:0 0 0 7px rgba(217,20,43,0)}100%{box-shadow:0 0 0 0 rgba(217,20,43,0)}}
+.stat-line{font-size:11.5px;line-height:1.35;padding:5px 9px;border-radius:6px;background:var(--band-2);border:1px solid var(--band-line);color:var(--band-ink);margin-top:3px}
+.stat-line b{color:var(--red)}
+.tabs{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.tabs a{font-family:var(--f-mono);font-size:11.5px;font-weight:600;text-decoration:none;border:1px solid var(--band-line);padding:5px 10px;border-radius:999px;color:var(--band-ink);background:var(--band-2)}
+.tabs a:hover{border-color:var(--red)}
+.tabs a[aria-current="page"]{background:var(--red);border-color:var(--red);color:var(--on-red)}
+.theme-btn{margin-left:auto;flex:none;width:30px;height:30px;border-radius:999px;border:1px solid var(--band-line);background:var(--band-2);color:var(--band-ink);font-size:14px;line-height:1;display:inline-flex;align-items:center;justify-content:center;padding:0}
+@media (max-width:560px){h1{font-size:20px}.cd b{font-size:17px}.logo{width:34px;height:34px}.tabs a{padding:5px 8px;font-size:11px}}
+@media (max-width:370px){.tabs a{padding:4px 7px;font-size:10.5px}}
+
+/* ===== sections ===== */
+section{display:flex;flex-direction:column;gap:10px;min-width:0}
+.head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:nowrap}
+.head h2{flex:1 1 auto;min-width:0;display:flex;align-items:center;flex-wrap:nowrap}
+.head h2::after{content:"";flex:none;width:18px;height:3px;background:var(--red);margin-left:8px;border-radius:2px;transform:translateY(1px)}
+.head > .note{flex:0 1 auto;max-width:50%;text-align:right;font-size:11.5px;line-height:1.3}
+.head.tog{cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+.head.tog h2::before{content:"";flex:none;width:7px;height:7px;border-right:2px solid var(--red);border-bottom:2px solid var(--red);transform:translateY(-2px) rotate(45deg);margin:0 9px 0 2px;transition:transform .15s}
+section.closed > .head.tog h2::before{transform:rotate(-45deg)}
+.sec-body{display:flex;flex-direction:column;gap:10px;min-width:0}
+section.closed > .sec-body{display:none}
+.note.clamp{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.note.clamp.open{display:block;-webkit-line-clamp:unset}
+.clampbox{display:flex;gap:8px;align-items:baseline;min-width:0}
+.clampbox .note{flex:1;min-width:0}
+.more-txt{font-family:var(--f-mono);font-size:11px;font-weight:600;border:0;background:none;color:var(--red-ink);padding:0;white-space:nowrap;flex:none}
+
+/* ===== tiles ===== */
+.strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.strip.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:560px){.strip.four{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:7px 10px;min-width:0;position:relative;overflow:hidden}
+.kpi::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;background:var(--ink)}
+.kpi.hot::before{background:var(--red);height:3px}
+.kpi .label{display:block;font-size:9.5px;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi b{display:block;font-family:var(--f-display);font-weight:600;font-size:19px;line-height:1.15;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kpi small{display:block;font-family:var(--f-mono);font-size:10px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:560px){.kpi b{font-size:17px}}
+
+/* ===== hero (next race) ===== */
+.hero{background:var(--band);color:var(--band-ink);border-radius:10px;padding:12px 14px;display:grid;gap:8px;position:relative;overflow:hidden;border:1px solid var(--band-line)}
+.hero::after{content:"";position:absolute;right:-30px;top:0;bottom:0;width:120px;background:repeating-linear-gradient(115deg,transparent 0 14px,rgba(217,20,43,.22) 14px 22px);pointer-events:none}
+.hero > *{position:relative;z-index:1}
+.hero .label{color:var(--band-muted)}
+.hero .label b{color:var(--red);font-weight:600}
+.hero h3{font-size:22px;line-height:1.1;text-transform:uppercase;letter-spacing:.02em}
+.hero .where{font-size:13px;color:var(--band-muted)}
+.hero .big{font-family:var(--f-mono);font-size:30px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;color:var(--band-ink)}
+.hero .big em{font-style:normal;color:var(--red)}
+.hero .when{font-family:var(--f-mono);font-size:11.5px;color:var(--band-muted)}
+.hero .when b{color:var(--band-ink);font-weight:600}
+.hero .tags{display:flex;gap:5px;flex-wrap:wrap}
+@media (max-width:440px){.hero .big{font-size:25px}.hero h3{font-size:19px}}
+.pill{font-family:var(--f-mono);font-size:9.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:4px;white-space:nowrap}
+.pill.red{background:var(--red);color:var(--on-red)}
+.pill.dim{background:transparent;color:var(--faint);border:1px solid var(--line)}
+.pill.done{background:var(--panel-2);color:var(--muted)}
+.pill.next{background:var(--ink);color:var(--bg)}
+.hero .pill.dim{border-color:var(--band-line);color:var(--band-muted)}
+
+/* ===== lists / rows ===== */
+.list{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg)}
+.lrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 11px;border-top:1px solid var(--line);font-size:13.5px}
+.lrow:first-child{border-top:0}
+.lrow .t{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lrow .t small{display:block;font-weight:400;font-size:11.5px;color:var(--muted);white-space:normal}
+.lrow .r{font-family:var(--f-mono);font-size:12px;text-align:right;white-space:nowrap}
+.lrow .r small{display:block;color:var(--faint);font-size:10.5px}
+.lrow.is-live{background:var(--red-soft);box-shadow:inset 3px 0 0 var(--red)}
+.lrow.is-next{box-shadow:inset 3px 0 0 var(--ink)}
+.lrow.is-done{opacity:.62}
+
+/* tap-to-expand bars */
+.xbar{display:grid;grid-template-columns:auto minmax(0,1fr) auto 14px;gap:9px;align-items:center;width:100%;padding:9px 11px;border:0;border-top:1px solid var(--line);background:var(--bg);text-align:left;font-size:13.5px}
+.list > .xbar:first-child{border-top:0}
+.xbar:hover{background:var(--panel)}
+.xbar .k{font-family:var(--f-mono);font-size:11px;color:var(--faint);min-width:26px}
+.xbar .t{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xbar .t small{display:block;font-weight:400;font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.xbar .r{font-family:var(--f-mono);font-size:12px;text-align:right;white-space:nowrap}
+.xbar .r small{display:block;font-size:10.5px;color:var(--faint)}
+.xbar::after{content:"";width:7px;height:7px;border-right:2px solid var(--red);border-bottom:2px solid var(--red);transform:rotate(-45deg);justify-self:center}
+.xbar[aria-expanded="true"]{background:var(--panel);box-shadow:inset 3px 0 0 var(--red)}
+.xbar[aria-expanded="true"]::after{transform:translateY(-2px) rotate(45deg)}
+.xdetail{border-top:1px solid var(--line);background:var(--panel);padding:10px 11px;display:grid;gap:8px}
+.xdetail[hidden]{display:none}
+
+/* tables */
+.tbl-wrap{overflow-x:auto;background:var(--bg);border:1px solid var(--line);border-radius:8px}
+.xdetail .tbl-wrap{border-radius:6px}
+table{border-collapse:collapse;width:100%}
+th,td{padding:7px 8px;text-align:right;white-space:nowrap}
+th{font-family:var(--f-mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:500;background:var(--panel);border-bottom:1px solid var(--line)}
+td{border-bottom:1px solid var(--line);font-size:13.5px}
+tr:last-child td{border-bottom:0}
+td.n,th.n{font-family:var(--f-mono)}
+th.l,td.l{text-align:left}
+td.pos{width:34px;font-weight:600;font-family:var(--f-mono)}
+td.drv{font-weight:600;max-width:190px;overflow:hidden;text-overflow:ellipsis}
+td.drv small{font-weight:400;color:var(--muted);font-size:11.5px;margin-left:5px}
+tr.p1 td.pos{color:var(--red);box-shadow:inset 3px 0 0 var(--red)}
+tr.champ td{background:var(--red-soft)}
+tr.out td{color:var(--faint)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:7px;vertical-align:0;background:var(--faint)}
+.gain{color:var(--up);font-family:var(--f-mono)} .loss{color:var(--down);font-family:var(--f-mono)} .flat{color:var(--faint);font-family:var(--f-mono)}
+.st{font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.st.leader,.st.champ{color:var(--red)} .st.alive{color:var(--up)} .st.tie{color:var(--gold)} .st.out{color:var(--faint)}
+.fl{font-family:var(--f-mono);font-size:9px;font-weight:600;padding:1px 4px;border-radius:3px;background:#6d28d9;color:#fff;margin-left:5px;vertical-align:1px}
+.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 16px;font-size:13px}
+.facts div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dotted var(--line-strong);padding-bottom:3px;min-width:0}
+.facts span{color:var(--muted)}
+.facts b{font-family:var(--f-mono);font-weight:600;font-size:12.5px;text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:480px){.facts{grid-template-columns:1fr}}
+
+/* title math */
+.tcard{border:1px solid var(--line-strong);border-radius:10px;padding:10px 12px;display:grid;gap:7px;background:linear-gradient(180deg,var(--panel),var(--bg));box-shadow:inset 0 3px 0 var(--red)}
+.verdict{font-family:var(--f-display);font-weight:600;font-size:15px;line-height:1.3}
+.verdict b{color:var(--red)}
+.pv-row{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:8px;align-items:center;padding:7px 10px;border-top:1px solid var(--line);font-size:13px}
+.pv-row:first-child{border-top:0}
+.pv-row .k{font-family:var(--f-mono);font-size:11px;color:var(--faint)}
+.pv-row .who{min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.pv-row .who small{display:block;font-weight:400;font-size:11.5px;color:var(--muted);white-space:normal}
+.pv-row .g{font-family:var(--f-mono);font-size:12px;font-weight:600;text-align:right;white-space:nowrap}
+.steps{margin:0;padding:0 0 0 18px;display:grid;gap:4px;font-size:13px}
+.steps li::marker{color:var(--red)}
+
+/* teammate battles */
+.podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.pod{border:1px solid var(--line);border-radius:9px;padding:8px 6px;display:grid;gap:2px;background:var(--panel);min-width:0;text-align:center}
+.pod.p1{background:var(--band);color:var(--band-ink);border-color:var(--band);box-shadow:inset 0 3px 0 var(--red)}
+.pod .medal{font-size:18px;line-height:1}
+.pod .who{font-family:var(--f-display);font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pod small{font-family:var(--f-mono);font-size:10px;color:var(--muted);line-height:1.3}
+.pod.p1 small{color:var(--band-muted)}
+.pod .tag{font-family:var(--f-mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--red)}
+.tm-names{display:flex;justify-content:space-between;gap:8px;font-weight:600;font-size:13.5px}
+.tm-names span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.duel{display:grid;grid-template-columns:52px minmax(0,1fr);gap:8px;align-items:center}
+.duel .label{font-size:9px;letter-spacing:.06em}
+.split{display:flex;height:18px;border-radius:4px;overflow:hidden;background:var(--panel-2);font-family:var(--f-mono);font-size:11px;font-weight:600}
+.split span{display:flex;align-items:center;padding:0 6px;min-width:0;white-space:nowrap}
+.split .a{background:var(--ink);color:var(--bg)}
+.split .b{background:var(--red);color:var(--on-red);justify-content:flex-end;margin-left:auto}
+.split .a.zero,.split .b.zero{padding:0;width:0}
+.tm .xbar{grid-template-columns:minmax(0,1fr) auto 14px}
+
+.sur{display:none}
+@media (max-width:560px){.hide-sm{display:none}td.drv small{display:none}.full{display:none}.sur{display:inline}th,td{padding:7px 6px}}
+/* live / provisional */
+.livebox{border:1px solid var(--red-line);border-radius:10px;padding:10px 12px;display:grid;gap:8px;background:var(--red-soft)}
+.livebox h3{font-size:15px;display:flex;align-items:center;gap:8px}
+.livebox h3::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--red);animation:ping 1.6s infinite}
+.offseason{font-size:14px;padding:12px 14px;border-radius:8px;background:var(--panel);border:1px solid var(--line-strong);box-shadow:inset 3px 0 0 var(--red)}
+.empty{font-size:13px;color:var(--muted);padding:10px 12px;border:1px dashed var(--line-strong);border-radius:8px}
+
+/* footer */
+footer{display:flex;justify-content:space-between;align-items:center;gap:6px 8px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--line);font-family:var(--f-mono);font-size:11px;color:var(--faint);letter-spacing:.03em}
+footer .sig{color:var(--muted)} footer .sig b{color:var(--red-ink);font-weight:600}
+footer .legal{flex-basis:100%;font-size:10.5px;color:var(--faint);letter-spacing:0;line-height:1.4}
+footer a{color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head><body>
+<div class="band"><header>
+  <div class="hdr">
+    <div class="brand">
+      <img class="logo" src="logo.svg" alt="" width="38" height="38">
+      <div><div class="eyebrow" id="eyebrow">F1 Season Tracker <b>//</b> <span id="eb-season"></span></div><h1>Red<span>line</span></h1></div>
+    </div>
+    <div class="cd" id="cd" hidden><span class="label" id="cd-l">Next</span><b id="cd-t">--:--:--</b><small id="cd-s"></small></div>
+  </div>
+  <div class="upd num" id="upd"></div>
+  <div class="stat-line" id="stat-line" hidden></div>
+  <nav class="tabs" aria-label="Pages">
+    <a href="index.html" data-p="next">Next Race</a><a href="standings.html" data-p="standings">Standings</a><a href="results.html" data-p="results">Results</a><a href="teammates.html" data-p="teammates">Teammates</a>
+    <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch theme">🌙</button>
+  </nav>
+</header></div>
+
+<div class="wrap">
+  <main id="view" style="display:flex;flex-direction:column;gap:20px"></main>
+  <footer>
+    <span>Data: Jolpica-F1 + OpenF1</span><span class="sig">built by <b>kingtrents</b>⚡️ x claude 🫡</span>
+    <span class="legal">Unofficial fan project. Not affiliated with, endorsed by, or connected to Formula 1, the FIA, or any team. F1 and FORMULA 1 are trademarks of Formula One Licensing B.V., used here only to describe the subject. Data from the free <a href="https://github.com/jolpica/jolpica-f1" target="_blank" rel="noopener">Jolpica-F1</a> and <a href="https://openf1.org" target="_blank" rel="noopener">OpenF1</a> projects and may be delayed or wrong.</span>
+  </footer>
+</div>
+
+<script>
+let DATA = __DATA__;
+const PAGE = "__PAGE__";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const TZ = "America/Chicago";
+const ct = (d, o) => new Date(d).toLocaleString("en-US", {timeZone: TZ, ...o});
+const ctTime = d => ct(d, {hour: "numeric", minute: "2-digit"}) + " CT";
+const ctDay = d => ct(d, {weekday: "short", month: "short", day: "numeric"});
+const pts = p => (p == null ? "" : (Number.isInteger(+p) ? String(+p) : (+p).toFixed(1)));
+const short = n => String(n || "").replace(" Grand Prix", " GP");
+const pad = n => String(n).padStart(2, "0");
+const SESS_SHORT = {"Practice 1": "FP1", "Practice 2": "FP2", "Practice 3": "FP3", "Sprint Qualifying": "Sprint Quali", "Sprint": "Sprint", "Qualifying": "Qualifying", "Race": "Race"};
+function color(row){
+  const c = DATA.colors || {};
+  return c[String(row?.num)] || null;
+}
+function teamColor(teamId){
+  for (const r of (DATA.standings?.drivers || [])) if (r.teamId === teamId && color(r)) return color(r);
+  return null;
+}
+const dot = c => `<i class="dot" style="${c ? "background:" + esc(c) : ""}"></i>`;
+function dur(ms){
+  const s = Math.max(0, Math.floor(ms / 1000)), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
+  return d ? `${d}d ${h}h ${pad(m)}m` : `${h}:${pad(m)}:${pad(x)}`;
+}
+function trackTime(iso){
+  const off = DATA.meeting?.gmt_offset; if (!off) return "";
+  const m = off.match(/^(-?)(\d+):(\d+)/); if (!m) return "";
+  const mins = (m[1] ? -1 : 1) * (+m[2] * 60 + +m[3]);
+  const d = new Date(new Date(iso).getTime() + mins * 60000);
+  return d.toLocaleString("en-US", {timeZone: "UTC", weekday: "short", hour: "numeric", minute: "2-digit"});
+}
+function sessState(s, now = Date.now()){
+  const a = new Date(s.start).getTime(), b = new Date(s.end).getTime();
+  return now >= b ? "done" : now >= a ? "live" : "upcoming";
+}
+function nextSession(){
+  const n = DATA.next; if (!n) return null;
+  const now = Date.now();
+  const live = n.sessions.find(s => sessState(s, now) === "live");
+  if (live) return {s: live, live: true};
+  const up = n.sessions.find(s => sessState(s, now) === "upcoming");
+  return up ? {s: up, live: false} : null;
+}
+
+/* ================= views ================= */
+function viewNext(){
+  const n = DATA.next, ly = DATA.lastYear, w = DATA.weather;
+  if (!n) return `<div class="offseason"><b>Off-season.</b> The ${(DATA.season || 0) + 1} calendar isn't published yet. Standings and results below stay on ${esc(DATA.season)} until it is, and this page switches over on its own.</div>`;
+  const total = (n.season === DATA.season ? DATA.schedule.length : (DATA.nextYearSchedule || []).length) || "?";
+  const ns = nextSession();
+  let h = `<section data-fixed="1"><div class="hero">
+    <div class="tags"><span class="label">Round <b>${n.round}</b> of ${total} <b>//</b> ${n.season}</span>${n.sprint ? '<span class="pill red">Sprint weekend</span>' : ""}${ns && ns.live ? `<span class="pill red">Live: ${esc(SESS_SHORT[ns.s.name])}</span>` : ""}</div>
+    <h3>${esc(n.name)}</h3>
+    <div class="where">${esc(n.circuit.name)} · ${esc(n.circuit.locality)}, ${esc(n.circuit.country)}</div>
+    <div><div class="label">Lights out in</div><div class="big" id="race-cd">--</div></div>
+    <div class="when"><b>${esc(ctDay(n.start))}, ${esc(ctTime(n.start))}</b>${trackTime(n.start) ? ` · track time ${esc(trackTime(n.start))}` : ""}</div>
+  </div></section>`;
+  h += liveBlock();
+  // schedule
+  h += `<section id="sched-sec"><div class="head"><h2>Weekend schedule</h2><span class="note">Central time</span></div><div class="list">`;
+  for (const s of n.sessions){
+    const st = sessState(s);
+    const isNext = ns && ns.s === s && !ns.live;
+    h += `<div class="lrow ${st === "live" ? "is-live" : st === "done" ? "is-done" : isNext ? "is-next" : ""}"><div class="t">${esc(s.name)}<small>${esc(ctDay(s.start))}${trackTime(s.start) ? " · track " + esc(trackTime(s.start)) : ""}</small></div>
+      <div class="r">${esc(ctTime(s.start))}<small>${st === "live" ? '<span class="pill red">Live</span>' : st === "done" ? '<span class="pill done">Done</span>' : isNext ? '<span class="pill next">Next</span>' : '<span class="pill dim">Upcoming</span>'}</small></div></div>`;
+  }
+  h += `</div><div class="note">Times come from Jolpica-F1 and are checked against OpenF1. Session lengths are estimates (practice and qualifying 1 hr, race 2 hr), used only to mark a session live or done.</div></section>`;
+  // track info
+  const m = DATA.meeting || {};
+  h += `<section id="track-sec"><div class="head"><h2>Track info</h2><span class="note">${esc(m.circuit_short_name || n.circuit.locality)}</span></div><div class="facts">
+    <div><span>Circuit</span><b>${esc(n.circuit.name)}</b></div>
+    <div><span>Location</span><b>${esc(n.circuit.locality)}, ${esc(n.circuit.country)}</b></div>
+    ${m.circuit_type ? `<div><span>Type</span><b>${esc(m.circuit_type)}</b></div>` : ""}
+    ${m.gmt_offset ? `<div><span>Track time zone</span><b>UTC${esc(m.gmt_offset.replace(/:00$/, "").replace(/^(\d)/, "+$1"))}</b></div>` : ""}
+    ${ly && ly.laps ? `<div><span>Race laps (${ly.year})</span><b>${ly.laps}</b></div>` : ""}
+    ${ly && ly.time ? `<div><span>Winning time (${ly.year})</span><b>${esc(ly.time)}</b></div>` : ""}
+  </div>`;
+  if (ly && ly.winner){
+    h += `<div class="strip"><div class="kpi hot"><span class="label">${ly.year} winner</span><b>${esc(ly.winner.split(" ").slice(-1)[0])}</b><small>${esc(ly.winnerTeam)}</small></div>
+      <div class="kpi"><span class="label">${ly.year} pole</span><b>${esc((ly.pole || "n/a").split(" ").slice(-1)[0])}</b><small>${esc(ly.poleTime || "")}</small></div>
+      <div class="kpi"><span class="label">${ly.year} fastest lap</span><b>${esc((ly.fl || "n/a").split(" ")[0])}</b><small>${esc((ly.fl || "").split(" ").slice(1).join(" "))}</small></div></div>`;
+  } else h += `<div class="note">No race here last year, so there's no previous winner to show.</div>`;
+  h += `</section>`;
+  // weather
+  if (w){
+    const F = c => c == null ? "n/a" : Math.round(c * 9 / 5 + 32) + "°F";
+    h += `<section id="wx-sec"><div class="head"><h2>Track weather</h2><span class="note">OpenF1, ${esc(ctTime(w.at))}</span></div><div class="strip four">
+      <div class="kpi"><span class="label">Air</span><b>${F(w.air)}</b></div><div class="kpi hot"><span class="label">Track</span><b>${F(w.track)}</b></div>
+      <div class="kpi"><span class="label">Rain</span><b>${w.rain ? "Yes" : "No"}</b></div><div class="kpi"><span class="label">Wind</span><b>${w.wind == null ? "n/a" : Math.round(w.wind * 2.237) + " mph"}</b><small>humidity ${w.hum ?? "n/a"}%</small></div></div></section>`;
+  }
+  // rest of season
+  const rest = (n.season === DATA.season ? DATA.schedule : DATA.nextYearSchedule || []).filter(r => r.round > n.round);
+  h += `<section id="rest-sec"><div class="head"><h2>Rest of ${n.season}</h2><span class="note">${rest.length ? rest.length + " more after this" : "Season finale"}</span></div>`;
+  h += rest.length ? `<div class="list">${rest.map(r => `<div class="lrow"><div class="t">R${r.round} ${esc(short(r.name))}<small>${esc(r.circuit.locality)}, ${esc(r.circuit.country)}${r.sprint ? " · Sprint" : ""}</small></div><div class="r">${esc(ctDay(r.start))}<small>${esc(ctTime(r.start))}</small></div></div>`).join("")}</div>` : `<div class="empty">This is the last race of ${n.season}.</div>`;
+  h += `</section>`;
+  return h;
+}
+
+function liveBlock(){
+  const ns = nextSession(), pv = DATA.provisional;
+  let h = "";
+  if (ns && ns.live){
+    h += `<section data-fixed="1" id="live-sec"><div class="livebox"><h3>${esc(ns.s.name)} is on now</h3>
+      <div class="note" id="live-note">Checking OpenF1 from your browser every minute...</div><div id="live-rows"></div></div></section>`;
+  }
+  if (pv && pv.rows && pv.rows.length && Date.now() - new Date(pv.end) < 30 * 3600 * 1000){
+    h += `<section id="prov-sec"><div class="head"><h2>${esc(pv.session)} result</h2><span class="note">Provisional, OpenF1</span></div>${provTable(pv.rows, pv.session)}
+      <div class="note">Posted by OpenF1 shortly after the session. The official result on the Results tab replaces this once Jolpica-F1 has it.</div></section>`;
+  }
+  return h;
+}
+function lap(v){ if (v == null) return ""; const m = Math.floor(v / 60), x = (v - m * 60).toFixed(3).padStart(6, "0"); return m ? `${m}:${x}` : x; }
+function provTable(rows, session){
+  const race = session === "Race" || session === "Sprint";
+  return `<div class="tbl-wrap"><table><thead><tr><th>#</th><th class="l">Driver</th><th>Laps</th><th>${race ? "Gap" : "Best"}</th></tr></thead><tbody>${rows.map(r => {
+    const last = v => Array.isArray(v) ? v.filter(x => x != null).slice(-1)[0] : v;
+    let g = r.dnf ? "DNF" : r.dns ? "DNS" : r.dsq ? "DSQ" : null;
+    if (!g) g = race ? (r.pos === 1 ? "Leader" : (typeof last(r.gap) === "number" ? "+" + last(r.gap).toFixed(3) : last(r.gap) ?? "")) : lap(last(r.best));
+    return `<tr class="${r.pos === 1 ? "p1" : ""}"><td class="pos">${r.pos ?? "-"}</td><td class="l drv">${dot(color(r))}${esc(r.code || r.num)}<small>${esc(r.team || "")}</small></td><td class="n">${r.laps ?? ""}</td><td class="n">${esc(g)}</td></tr>`;
+  }).join("")}</tbody></table></div>`;
+}
+function viewStandings(){
+  const s = DATA.standings, T = DATA.title, D = s.drivers, C = s.teams;
+  if (!D.length) return `<div class="empty">No standings yet for ${DATA.season}. They show up after the first race.</div>`;
+  const lead = D[0], p2 = D[1];
+  let h = `<div class="strip"><div class="kpi hot"><span class="label">Leader</span><b>${esc(lead.name.split(" ").slice(-1)[0])}</b><small>${pts(lead.pts)} pts</small></div>
+    <div class="kpi"><span class="label">Lead</span><b>${p2 ? "+" + pts(lead.pts - p2.pts) : "-"}</b><small>over ${esc(p2 ? p2.code : "")}</small></div>
+    <div class="kpi"><span class="label">Races left</span><b>${DATA.racesLeft}</b><small>${DATA.sprintsLeft ? DATA.sprintsLeft + " sprints too" : "no sprints left"}</small></div></div>`;
+  h += `<section data-fixed="1"><div class="tcard"><span class="label">Title math <b style="color:var(--red)">//</b> after round ${s.round}</span>
+    <div class="verdict">${verdict(T.drivers, "Drivers")}</div><div class="verdict">${verdict(T.teams, "Constructors")}</div>
+    <div class="note">${esc(maxNote(T.drivers, "a driver"))}</div></div></section>`;
+  const st = id => (T.drivers?.rows || []).find(r => r.id === id) || {};
+  h += `<section id="drv-sec"><div class="head"><h2>Drivers</h2><span class="note">after round ${s.round}</span></div><div class="tbl-wrap"><table>
+    <thead><tr><th>#</th><th class="l">Driver</th><th>Pts</th><th>Gap</th><th class="hide-sm">Wins</th><th>Max</th><th>Title</th></tr></thead><tbody>`;
+  for (const r of D){
+    const t = st(r.id), state = T.drivers.clinched && t.state === "leader" ? "champ" : t.state;
+    h += `<tr class="${r.pos === 1 ? "p1" : ""} ${state === "champ" ? "champ" : ""} ${state === "out" ? "out" : ""}"><td class="pos">${r.pos}</td><td class="l drv">${dot(color(r))}<span class="full">${esc(r.name)}</span><span class="sur">${esc(r.name.split(" ").slice(-1)[0])}</span><small>${esc(r.team)}</small></td>
+      <td class="n"><b>${pts(r.pts)}</b></td><td class="n">${r.pos === 1 ? "" : "-" + pts(lead.pts - r.pts)}</td><td class="n hide-sm">${r.wins}</td><td class="n">${pts(t.best)}</td><td><span class="st ${state}">${stateLabel(state)}</span></td></tr>`;
+  }
+  h += `</tbody></table></div><div class="note">Max = current points plus everything still available (${esc(pts(T.drivers.maxLeft))}: 25 per race, 8 per sprint). Out = can't catch the leader even winning everything left.</div></section>`;
+  const tst = id => (T.teams?.rows || []).find(r => r.id === id) || {};
+  h += `<section id="con-sec"><div class="head"><h2>Constructors</h2><span class="note">${C.length} teams</span></div><div class="tbl-wrap"><table>
+    <thead><tr><th>#</th><th class="l">Team</th><th>Pts</th><th>Gap</th><th class="hide-sm">Wins</th><th>Max</th><th>Title</th></tr></thead><tbody>`;
+  for (const r of C){
+    const t = tst(r.id), state = T.teams.clinched && t.state === "leader" ? "champ" : t.state;
+    h += `<tr class="${r.pos === 1 ? "p1" : ""} ${state === "champ" ? "champ" : ""} ${state === "out" ? "out" : ""}"><td class="pos">${r.pos}</td><td class="l drv">${dot(teamColor(r.id))}${esc(r.name)}</td>
+      <td class="n"><b>${pts(r.pts)}</b></td><td class="n">${r.pos === 1 ? "" : "-" + pts(C[0].pts - r.pts)}</td><td class="n hide-sm">${r.wins}</td><td class="n">${pts(t.best)}</td><td><span class="st ${state}">${stateLabel(state)}</span></td></tr>`;
+  }
+  h += `</tbody></table></div><div class="note">A team can score at most ${esc(pts(43))} a race (a 1-2) and ${esc(pts(15))} a sprint, so ${esc(pts(T.teams.maxLeft))} is still on the table.</div></section>`;
+  h += mathSection(T.drivers, "drv-math", "Drivers' title path");
+  h += mathSection(T.teams, "con-math", "Constructors' title path");
+  return h;
+}
+const stateLabel = s => ({champ: "Champion", leader: "Leads", alive: "In it", tie: "Tie only", out: "Out"}[s] || "");
+function verdict(t, label){
+  if (!t) return "";
+  return `<b>${label}:</b> ${esc(t.headline)}`;
+}
+function maxNote(t){
+  if (!t) return "";
+  return `${t.racesLeft} race${t.racesLeft === 1 ? "" : "s"}${t.sprintsLeft ? " and " + t.sprintsLeft + " sprint" + (t.sprintsLeft === 1 ? "" : "s") : ""} left: up to ${pts(t.maxLeft)} points for a driver. Ties go to countback (most wins, then most 2nds, and so on).`;
+}
+function mathSection(t, id, title){
+  if (!t) return "";
+  const contenders = t.rows.filter(r => r.state !== "out");
+  let h = `<section id="${id}"><div class="head"><h2>${title}</h2><span class="note">${t.clinched ? "Decided" : contenders.length + " in it"}</span></div>`;
+  h += `<ol class="steps">${t.steps.map(s => `<li>${esc(s)}</li>`).join("")}</ol>`;
+  if (!t.clinched){
+    h += `<div class="list">${contenders.map((r, i) => `<div class="pv-row"><span class="k">P${i + 1}</span><span class="who">${esc(r.name)}<small>${r.state === "leader" ? "Leads on " + pts(r.pts) : r.state === "tie" ? "Can only tie the leader, so countback would decide" : "Needs about " + r.perRace + " more than the leader per race"}</small></span><span class="g">${r.state === "leader" ? pts(r.pts) : "-" + pts(r.gap)}</span></div>`).join("")}</div>`;
+  }
+  const f = (t.fights || []).filter(x => x.pos > 1 || !t.clinched);
+  if (f.length){
+    h += `<div class="label" style="margin-top:4px">Position fights</div><div class="list">${f.map(x => `<div class="pv-row"><span class="k">P${x.pos}</span><span class="who">${esc(x.ahead)}<small>vs ${esc(x.behind)} (P${x.pos + 1})</small></span><span class="g" style="color:${x.locked ? "var(--faint)" : "var(--red)"}">${x.locked ? "locked" : pts(x.gap) + " pts"}</span></div>`).join("")}</div>`;
+    h += `<div class="note">Locked = the gap is bigger than the ${pts(t.maxLeft)} points left, so the car behind can't get past.</div>`;
+  }
+  return h + `</section>`;
+}
+
+const OPEN = new Set();
+function viewResults(){
+  const R = DATA.results || [];
+  if (!R.length) return `<div class="empty">No races run yet in ${DATA.season}.</div>`;
+  const winners = {}; R.forEach(r => { const w = r.results[0]; if (w) winners[w.name] = (winners[w.name] || 0) + 1; });
+  const top = Object.entries(winners).sort((a, b) => b[1] - a[1])[0];
+  let h = `<div class="strip"><div class="kpi hot"><span class="label">Races run</span><b>${R.length}</b><small>of ${DATA.schedule.length || "?"}</small></div>
+    <div class="kpi"><span class="label">Winners</span><b>${Object.keys(winners).length}</b><small>different drivers</small></div>
+    <div class="kpi"><span class="label">Most wins</span><b>${esc(top ? top[0].split(" ").slice(-1)[0] : "-")}</b><small>${top ? top[1] + " wins" : ""}</small></div></div>`;
+  h += liveBlock();
+  h += `<section data-fixed="1" id="res-sec"><div class="head"><h2>Every race</h2><span class="note">Newest first. Tap a race</span></div><div class="list">`;
+  for (const r of [...R].reverse()){
+    const w = r.results[0], pole = r.quali[0], fl = r.results.find(x => x.fl), dnf = r.results.filter(x => x.dnf);
+    const key = "r" + r.round, open = OPEN.has(key);
+    h += `<button class="xbar" type="button" data-x="${key}" aria-expanded="${open}"><span class="k">R${r.round}</span><span class="t">${esc(short(r.name))}<small>${esc(ctDay(r.date))}${r.sprint.length ? " · Sprint weekend" : ""}</small></span><span class="r">${dot(color(w))}${esc(w ? w.code : "")}<small>winner</small></span></button>
+      <div class="xdetail" id="x-${key}" ${open ? "" : "hidden"}>
+        <div class="facts"><div><span>Pole</span><b>${esc(pole ? pole.name : "n/a")}${pole && pole.q ? " " + esc(pole.q) : ""}</b></div>
+        <div><span>Fastest lap</span><b>${esc(fl ? fl.name + " " + (fl.flTime || "") : "n/a")}</b></div>
+        <div><span>DNFs</span><b>${dnf.length ? esc(dnf.map(x => x.code).join(", ")) : "none"}</b></div>
+        <div><span>Most places gained</span><b>${esc(mover(r.results))}</b></div></div>
+        ${resTable(r.results)}
+        ${r.sprint.length ? `<div class="label">Sprint</div>${resTable(r.sprint, true)}` : ""}
+      </div>`;
+  }
+  h += `</div><div class="note">+/- compares grid slot to finish (a pit lane start counts as the back of the grid). DNF = didn't finish or wasn't classified, including DNS and DSQ. Purple badge = fastest lap.</div></section>`;
+  return h;
+}
+function mover(rows){
+  let best = null;
+  for (const x of rows){ if (x.dnf) continue; const g = (x.grid || rows.length) - x.pos; if (!best || g > best.g) best = {g, x}; }
+  return best && best.g > 0 ? `${best.x.code} +${best.g}` : "n/a";
+}
+function resTable(rows, sprint){
+  return `<div class="tbl-wrap"><table><thead><tr><th>#</th><th class="l">Driver</th><th>Grid</th><th>+/-</th><th class="l">Time / status</th><th>Pts</th></tr></thead><tbody>${rows.map(x => {
+    const g = x.grid || rows.length, d = x.dnf ? null : g - x.pos;
+    return `<tr class="${x.pos === 1 ? "p1" : ""}"><td class="pos">${x.dnf ? esc(x.pt) : x.pos}</td><td class="l drv">${dot(color(x))}${esc(x.code)}<small>${esc(x.team)}</small>${x.fl && !sprint ? '<span class="fl">FL</span>' : ""}</td>
+      <td class="n">${x.grid || "PL"}</td><td>${d == null ? '<span class="flat">-</span>' : d > 0 ? `<span class="gain">+${d}</span>` : d < 0 ? `<span class="loss">${d}</span>` : '<span class="flat">0</span>'}</td>
+      <td class="l n">${esc(x.dnf ? x.status : x.pos === 1 ? x.time || "" : x.time ? x.time : x.status)}</td><td class="n">${x.pts ? pts(x.pts) : ""}</td></tr>`;
+  }).join("")}</tbody></table></div>`;
+}
+
+function viewTeammates(){
+  const B = DATA.teammates || [];
+  if (!B.length) return `<div class="empty">Teammate battles start after the first race.</div>`;
+  const kings = [...B].map(b => ({b, who: b.leader === 0 ? b.a : b.b})).sort((x, y) => y.b.dom - x.b.dom).slice(0, 3);
+  let h = `<section data-fixed="1"><div class="head"><h2>Teammate kings 👑</h2><span class="note">Most one-sided garages</span></div><div class="podium">${kings.map((k, i) => {
+    const w = k.b.leader, q = k.b.q[w], r = k.b.r[w], nq = k.b.q[0] + k.b.q[1], nr = k.b.r[0] + k.b.r[1];
+    return `<div class="pod ${i === 0 ? "p1" : ""}"><span class="medal">${["🥇", "🥈", "🥉"][i]}</span><span class="who">${esc(k.who.code)}</span><span class="tag">${esc(k.b.name)}</span><small>${k.b.dom}% of duels<br>Q ${q}-${nq - q} · R ${r}-${nr - r}</small></div>`;
+  }).join("")}</div><div class="note">Duels = qualifying head-to-heads plus race head-to-heads. A race only counts when both drivers are classified, so one car breaking down doesn't hand the other a win.</div></section>`;
+  h += `<section data-fixed="1" id="tm-sec" class="tm"><div class="head"><h2>Head to head</h2><span class="note">Constructor order. Tap a team</span></div><div class="list">`;
+  for (const b of B){
+    const key = "t" + b.id, open = OPEN.has(key), ca = color(b.a), cb = color(b.b);
+    h += `<button class="xbar" type="button" data-x="${key}" aria-expanded="${open}" style="display:grid;grid-template-columns:minmax(0,1fr) 14px;padding:10px 11px">
+      <span style="display:grid;gap:5px;min-width:0"><span class="tm-names"><span>${dot(teamColor(b.id))}${esc(b.a.code)} <span class="label" style="font-size:9px">${esc(b.name)}</span></span><span>${esc(b.b.code)}</span></span>
+      ${duel("Quali", b.q[0], b.q[1])}${duel("Race", b.r[0], b.r[1])}${duel("Points", b.pts[0], b.pts[1], true)}</span></button>
+      <div class="xdetail" id="x-${key}" ${open ? "" : "hidden"}>
+        <div class="facts"><div><span>${esc(b.a.name)}</span><b>${b.a.races} races, ${pts(b.pts[0])} pts</b></div><div><span>${esc(b.b.name)}</span><b>${b.b.races} races, ${pts(b.pts[1])} pts</b></div></div>
+        ${b.others.length ? `<div class="note">Also drove for ${esc(b.name)}: ${esc(b.others.map(o => o.name + " (" + o.races + ")").join(", "))}. Duels only use races where both main drivers raced.</div>` : ""}
+        <div class="tbl-wrap"><table><thead><tr><th>Rd</th><th class="l">Race</th><th>Q ${esc(b.a.code)}</th><th>Q ${esc(b.b.code)}</th><th>${esc(b.a.code)}</th><th>${esc(b.b.code)}</th></tr></thead><tbody>
+        ${[...b.rounds].reverse().map(x => `<tr><td class="n">${x.round}</td><td class="l">${esc(short(x.name))}</td><td class="n" style="${x.q === 0 ? "color:var(--red);font-weight:600" : ""}">${x.qa ?? "-"}</td><td class="n" style="${x.q === 1 ? "color:var(--red);font-weight:600" : ""}">${x.qb ?? "-"}</td>
+          <td class="n" style="${x.r === 0 ? "color:var(--red);font-weight:600" : ""}">${esc(x.fa)}</td><td class="n" style="${x.r === 1 ? "color:var(--red);font-weight:600" : ""}">${esc(x.fb)}</td></tr>`).join("")}
+        </tbody></table></div><div class="note">Red = won that duel. Finishing letters: R retired, D disqualified, W withdrew, N not classified.</div>
+      </div>`;
+  }
+  h += `</div><div class="note">Black bar = the first driver named, red bar = the second. Points include sprints.</div></section>`;
+  return h;
+}
+function duel(label, a, b, isPts){
+  const t = a + b, pa = t ? Math.round(100 * a / t) : 50;
+  return `<span class="duel"><span class="label">${label}</span><span class="split" role="img" aria-label="${label}: ${pts(a)} to ${pts(b)}"><span class="a ${a ? "" : "zero"}" style="width:${t ? pa : 50}%">${a ? pts(a) : ""}</span><span class="b ${b ? "" : "zero"}" style="width:${t ? 100 - pa : 50}%">${b ? pts(b) : ""}</span></span></span>`;
+}
+
+/* ================= render + behaviors ================= */
+function render(){
+  $("eb-season").textContent = DATA.season;
+  document.querySelectorAll(".tabs a").forEach(a => { if (a.dataset.p === PAGE) a.setAttribute("aria-current", "page"); });
+  const v = {next: viewNext, standings: viewStandings, results: viewResults, teammates: viewTeammates}[PAGE];
+  $("view").innerHTML = v ? v() : "";
+  enhance(); updLine(); status(); tickRace();
+  if (nextSession()?.live) liveStart(); else liveStop();
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest(".xbar"); if (!b) return;
+  const k = b.dataset.x, d = $("x-" + k), open = b.getAttribute("aria-expanded") !== "true";
+  b.setAttribute("aria-expanded", String(open)); if (d) d.hidden = !open;
+  open ? OPEN.add(k) : OPEN.delete(k);
+});
+
+/* collapsible sections (start closed, remembered per device) + one-line explainers */
+const CKEY = "rl-closed-v1-" + PAGE;
+let closedSaved = {}; try { closedSaved = JSON.parse(localStorage.getItem(CKEY) || "{}") || {}; } catch (_) {}
+function enhance(){
+  document.querySelectorAll("#view section").forEach((sec, i) => {
+    const head = sec.querySelector(":scope > .head"); if (!head || sec.dataset.fixed === "1") return;
+    const key = sec.id || ("s" + i);
+    const body = document.createElement("div"); body.className = "sec-body";
+    [...sec.children].filter(c => c !== head).forEach(c => body.appendChild(c)); sec.appendChild(body);
+    head.classList.add("tog"); head.setAttribute("role", "button"); head.tabIndex = 0;
+    const set = c => { sec.classList.toggle("closed", c); head.setAttribute("aria-expanded", String(!c)); };
+    set(key in closedSaved ? !!closedSaved[key] : true);
+    const flip = () => { const c = !sec.classList.contains("closed"); set(c); closedSaved[key] = c; try { localStorage.setItem(CKEY, JSON.stringify(closedSaved)); } catch (_) {} };
+    head.addEventListener("click", flip);
+    head.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); flip(); } });
+  });
+  document.querySelectorAll("#view .sec-body > .note, #view section > .note").forEach(n => {
+    if (n.id || n.closest(".clampbox") || (n.textContent || "").trim().length < 70) return;
+    const box = document.createElement("div"); box.className = "clampbox"; n.before(box); box.appendChild(n); n.classList.add("clamp");
+    const b = document.createElement("button"); b.type = "button"; b.className = "more-txt"; b.textContent = "more ▾"; b.setAttribute("aria-expanded", "false");
+    b.addEventListener("click", () => { const o = n.classList.toggle("open"); b.textContent = o ? "less ▴" : "more ▾"; b.setAttribute("aria-expanded", String(o)); });
+    box.appendChild(b);
+  });
+}
+
+/* header line: when this was updated and roughly when the next update lands */
+function updLine(){
+  const c = DATA.status?.checked; if (!c) return;
+  const next = new Date(new Date(c).getTime() + (DATA.cadence || 60) * 60000);
+  $("upd").innerHTML = `<span>Updated <b>${esc(ctTime(c))}</b></span><span>Next <b>~${esc(ctTime(next))}</b></span>${(DATA.cadence || 60) <= 10 ? "<span>Race weekend: every 10 min</span>" : ""}`;
+}
+/* status line: says in plain words why data might be old */
+async function status(){
+  const el = $("stat-line"), s = DATA.status || {}, show = h => { el.innerHTML = h; el.hidden = false; };
+  const from = s.checked ? ctTime(s.checked) : "earlier";
+  if (s.jolpica && s.jolpica !== "ok") return show(`📡 <b>Couldn't reach Jolpica-F1 on the last update.</b> Standings and results may be behind. Retrying on the next run.`);
+  const age = s.checked ? (Date.now() - new Date(s.checked)) / 60000 : 0, late = (DATA.cadence || 60) + 45;
+  if (age > late){
+    let gh = "";
+    try { const g = await fetch("https://www.githubstatus.com/api/v2/summary.json", {cache: "no-store"}); if (g.ok){ const j = await g.json(); const bad = (j.components || []).filter(c => ["Actions", "Pages"].includes(c.name) && c.status !== "operational"); if (bad.length) gh = bad.map(c => c.name + " " + c.status.replace("_", " ")).join(", "); } } catch (_) {}
+    const ago = age >= 90 ? Math.round(age / 60) + " hr" : Math.round(age) + " min";
+    return show(gh ? `🐙 <b>GitHub reports problems (${esc(gh)}).</b> Updates will catch up on their own. Showing data from ${esc(from)}, ${ago} ago.`
+                   : `⏳ <b>The last update was ${ago} ago.</b> GitHub's scheduler sometimes runs late; it catches up on its own. Showing data from ${esc(from)}.`);
+  }
+  const nw = DATA.next && new Date(DATA.next.sessions[0].start) - Date.now() < 12 * 3600 * 1000;
+  if (s.openf1 && s.openf1 !== "ok" && nw) return show(`📡 <b>OpenF1 didn't answer on the last update.</b> Track weather and quick results may be missing; the schedule and standings are fine.`);
+  el.hidden = true;
+}
+
+/* countdowns: header = next session, hero = lights out */
+function tickHeader(){
+  const box = $("cd"), ns = nextSession();
+  if (!ns){ box.hidden = true; return; }
+  box.hidden = false; box.classList.toggle("live", ns.live);
+  const t = ns.live ? ns.s.end : ns.s.start;
+  $("cd-l").textContent = ns.live ? "Live: " + SESS_SHORT[ns.s.name] : SESS_SHORT[ns.s.name] + " in";
+  $("cd-t").textContent = dur(new Date(t) - Date.now());
+  $("cd-s").textContent = ns.live ? "ends ~" + ctTime(t) : ct(ns.s.start, {weekday: "short", hour: "numeric", minute: "2-digit"}) + " CT";
+}
+function tickRace(){
+  const el = $("race-cd"); if (!el || !DATA.next) return;
+  const ms = new Date(DATA.next.start) - Date.now();
+  if (ms > 0) el.textContent = dur(ms);
+  else if (ms > -120 * 60000) el.innerHTML = "<em>Race on now</em>";
+  else el.textContent = "Finished";
+}
+setInterval(() => { tickHeader(); tickRace(); }, 1000); tickHeader();
+
+/* race day: while a session is on, ask OpenF1 directly from the browser every minute.
+   The free OpenF1 feed posts data after a session, not in real time, so this mostly shows what it has, honestly labeled. */
+let liveTimer = null;
+async function livePoll(){
+  const note = $("live-note"), rows = $("live-rows"); if (!note) return;
+  try {
+    const r = await fetch("https://api.openf1.org/v1/position?session_key=latest&date>" + encodeURIComponent(new Date(Date.now() - 10 * 60000).toISOString()), {cache: "no-store"});
+    if (r.status === 401 || r.status === 403){ note.textContent = "OpenF1 keeps live timing for paid accounts, so the free feed has nothing during the session. Results appear here when it posts them, usually soon after the flag."; return; }
+    const j = r.ok ? await r.json() : [];
+    if (!Array.isArray(j) || !j.length){ note.textContent = "No live positions on the free OpenF1 feed right now (it posts after the session). Checked " + ctTime(new Date()) + "."; rows.innerHTML = ""; return; }
+    const last = {}; j.forEach(p => { last[p.driver_number] = p; });
+    const list = Object.values(last).sort((a, b) => a.position - b.position);
+    note.textContent = "Positions from OpenF1, newest " + ctTime(list[0].date) + " (may lag the TV).";
+    rows.innerHTML = `<div class="tbl-wrap"><table><thead><tr><th>#</th><th class="l">Car</th></tr></thead><tbody>${list.map(p => {
+      const d = (DATA.standings?.drivers || []).find(x => String(x.num) === String(p.driver_number));
+      return `<tr class="${p.position === 1 ? "p1" : ""}"><td class="pos">${p.position}</td><td class="l drv">${dot(color({num: p.driver_number}))}${esc(d ? d.code : "#" + p.driver_number)}<small>${esc(d ? d.team : "")}</small></td></tr>`;
+    }).join("")}</tbody></table></div>`;
+  } catch (e){ note.textContent = "Couldn't reach OpenF1 from this browser. Trying again in a minute."; }
+}
+function liveStart(){ livePoll(); if (!liveTimer) liveTimer = setInterval(livePoll, 60000); }
+function liveStop(){ if (liveTimer){ clearInterval(liveTimer); liveTimer = null; } }
+
+/* pull the newest published data every 2 minutes while the page is open */
+async function refresh(){
+  if (document.hidden) return;
+  try {
+    const r = await fetch("data.json?t=" + Date.now(), {cache: "no-store"}); if (!r.ok) return;
+    const fresh = await r.json();
+    if (fresh?.status?.checked && fresh.status.checked !== DATA.status?.checked){ DATA = fresh; render(); }
+    else status();
+  } catch (_) {}
+}
+setInterval(refresh, 120000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
+setInterval(() => { if (nextSession()?.live) liveStart(); else liveStop(); }, 60000);
+
+/* theme toggle: follows the device by default, button flips and remembers */
+(function(){
+  const b = $("theme-btn");
+  const cur = () => document.documentElement.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  const paint = () => { const d = cur() === "dark"; b.textContent = d ? "☀️" : "🌙"; b.setAttribute("aria-label", d ? "Switch to light mode" : "Switch to dark mode"); };
+  b.addEventListener("click", () => { const n = cur() === "dark" ? "light" : "dark"; document.documentElement.setAttribute("data-theme", n); try { localStorage.setItem("rl-theme", n); } catch (e) {} paint(); });
+  try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", paint); } catch (e) {}
+  paint();
+})();
+render();
+</script>
+</body></html>
