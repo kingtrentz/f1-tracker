@@ -226,6 +226,10 @@ tr.out td{color:var(--faint)}
 .tabs a.live-tab:not([aria-current="page"]){border-color:var(--red);color:var(--red)}
 .loadmore{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--line-strong);background:var(--panel);color:var(--ink);font-family:var(--f-display);font-weight:600;font-size:14px;display:flex;justify-content:center;align-items:baseline;gap:8px}
 .loadmore:hover{border-color:var(--red)}
+.morebar{display:flex;gap:8px}
+.morebar .loadmore{flex:1 1 0;min-width:0}
+.loadmore.less{background:var(--bg)}
+@media (max-width:440px){.morebar .loadmore small{display:none}}
 .loadmore small{font-family:var(--f-mono);font-size:10.5px;font-weight:500;color:var(--muted)}
 /* history */
 .hist-pick{display:grid;grid-template-columns:40px minmax(0,1fr) 40px;gap:8px}
@@ -462,7 +466,13 @@ function mathSection(t, id, title){
 
 const OPEN = new Set();
 let RES_SHOWN = 5;   // Results tab: newest 5 first, "Load more" adds 5 at a time
-document.addEventListener("click", e => { if (e.target.closest("#res-more")){ RES_SHOWN += 5; render(); } });
+document.addEventListener("click", e => {
+  if (e.target.closest("#res-more")){ RES_SHOWN += 5; render(); }
+  if (e.target.closest("#res-less")){   // back to the newest 5, and scroll up to the list so you're not stranded at the bottom
+    RES_SHOWN = 5; render();
+    const sec = $("res-sec"); if (sec) sec.scrollIntoView({block: "start", behavior: "smooth"});
+  }
+});
 function viewResults(){
   const R = DATA.results || [];
   if (!R.length) return `<div class="empty">No races run yet in ${DATA.season}.</div>`;
@@ -487,7 +497,7 @@ function viewResults(){
         ${r.sprint.length ? `<div class="label">Sprint</div>${resTable(r.sprint, true)}` : ""}
       </div>`;
   }
-  h += `</div>${left > 0 ? `<button type="button" class="loadmore" id="res-more">Load ${Math.min(5, left)} more <small>${left} earlier race${left === 1 ? "" : "s"}</small></button>` : ""}<div class="note">+/- compares grid slot to finish (a pit lane start counts as the back of the grid). DNF = didn't finish or wasn't classified, including DNS and DSQ. Purple badge = fastest lap.</div></section>`;
+  h += `</div>${left > 0 || shown.length > 5 ? `<div class="morebar">${left > 0 ? `<button type="button" class="loadmore" id="res-more">Load ${Math.min(5, left)} more <small>${left} earlier race${left === 1 ? "" : "s"}</small></button>` : ""}${shown.length > 5 ? `<button type="button" class="loadmore less" id="res-less">Collapse <small>back to latest 5</small></button>` : ""}</div>` : ""}<div class="note">+/- compares grid slot to finish (a pit lane start counts as the back of the grid). DNF = didn't finish or wasn't classified, including DNS and DSQ. Purple badge = fastest lap.</div></section>`;
   return h;
 }
 function mover(rows){
