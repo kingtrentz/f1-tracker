@@ -264,7 +264,7 @@ footer a{color:var(--muted)}
   <div class="hdr">
     <div class="brand">
       <span class="logo emo" aria-hidden="true">🏎️</span>
-      <div><div class="eyebrow" id="eyebrow">Unofficial <b>//</b> <span id="eb-season"></span> season</div><h1>F1 <span>Tracker</span></h1></div>
+      <div><div class="eyebrow" id="eyebrow"><span id="eb-season"></span> season</div><h1>F1 <span>Tracker</span></h1></div>
     </div>
     <div class="cd" id="cd" hidden><span class="label" id="cd-l">Next</span><b id="cd-t">--:--:--</b><small id="cd-s"></small></div>
   </div>
@@ -279,7 +279,7 @@ footer a{color:var(--muted)}
 <div class="wrap">
   <main id="view" style="display:flex;flex-direction:column;gap:20px"></main>
   <footer>
-    <span>Data: Jolpica-F1 + OpenF1</span><span class="sig">built by <b>kingtrents</b>⚡️ x claude 🫡</span>
+    <span class="sig">built by <b>kingtrents</b>⚡️ x claude 🫡</span>
     <span class="legal">Unofficial fan project. Not affiliated with, endorsed by, or connected to Formula 1, the FIA, or any team. F1 and FORMULA 1 are trademarks of Formula One Licensing B.V., used here only to describe the subject. Data from the free <a href="https://github.com/jolpica/jolpica-f1" target="_blank" rel="noopener">Jolpica-F1</a> and <a href="https://openf1.org" target="_blank" rel="noopener">OpenF1</a> projects and may be delayed or wrong.</span>
   </footer>
 </div>
@@ -289,9 +289,19 @@ let DATA = __DATA__;
 const PAGE = "__PAGE__";
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const TZ = "America/Chicago";
+// every time shows in the viewer's own zone (Eastern viewers see ET, and so on)
+const TZ = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Chicago"; } catch (e) { return "America/Chicago"; } })();
 const ct = (d, o) => new Date(d).toLocaleString("en-US", {timeZone: TZ, ...o});
-const ctTime = d => ct(d, {hour: "numeric", minute: "2-digit"}) + " CT";
+function tzAbbr(d){   // ET / CT / PT where the browser knows a short name, else GMT+1 style
+  for (const style of ["shortGeneric", "short"]){
+    try {
+      const p = new Intl.DateTimeFormat("en-US", {timeZone: TZ, timeZoneName: style}).formatToParts(new Date(d || Date.now())).find(x => x.type === "timeZoneName");
+      if (p && p.value && !/\s/.test(p.value)) return p.value;   // skip long names like "United Kingdom Time"
+    } catch (e) {}
+  }
+  return "";
+}
+const ctTime = d => ct(d, {hour: "numeric", minute: "2-digit"}) + " " + tzAbbr(d);
 const ctDay = d => ct(d, {weekday: "short", month: "short", day: "numeric"});
 const pts = p => (p == null ? "" : (Number.isInteger(+p) ? String(+p) : (+p).toFixed(1)));
 const short = n => String(n || "").replace(" Grand Prix", " GP");
@@ -341,18 +351,18 @@ function viewNext(){
     <h3>${esc(n.name)}</h3>
     <div class="where">${esc(n.circuit.name)} · ${esc(n.circuit.locality)}, ${esc(n.circuit.country)}</div>
     <div><div class="label">Lights out in</div><div class="big" id="race-cd">--</div></div>
-    <div class="when"><b>${esc(ctDay(n.start))}, ${esc(ctTime(n.start))}</b>${trackTime(n.start) ? ` · track time ${esc(trackTime(n.start))}` : ""}</div>
+    <div class="when"><b>${esc(ctDay(n.start))}, ${esc(ctTime(n.start))}</b></div>
   </div></section>`;
   h += liveBlock();
   // schedule
-  h += `<section id="sched-sec"><div class="head"><h2>Weekend schedule</h2><span class="note">Central time</span></div><div class="list">`;
+  h += `<section id="sched-sec"><div class="head"><h2>Weekend schedule</h2><span class="note">${esc(tzAbbr(n.start))}</span></div><div class="list">`;
   for (const s of n.sessions){
     const st = sessState(s);
     const isNext = ns && ns.s === s && !ns.live;
-    h += `<div class="lrow ${st === "live" ? "is-live" : st === "done" ? "is-done" : isNext ? "is-next" : ""}"><div class="t">${esc(s.name)}<small>${esc(ctDay(s.start))}${trackTime(s.start) ? " · track " + esc(trackTime(s.start)) : ""}</small></div>
-      <div class="r">${esc(ctTime(s.start))}<small>${st === "live" ? '<span class="pill red">Live</span>' : st === "done" ? '<span class="pill done">Done</span>' : isNext ? '<span class="pill next">Next</span>' : '<span class="pill dim">Upcoming</span>'}</small></div></div>`;
+    h += `<div class="lrow ${st === "live" ? "is-live" : st === "done" ? "is-done" : isNext ? "is-next" : ""}"><div class="t">${esc(s.name)}<small>${esc(ctDay(s.start))}</small></div>
+      <div class="r">${esc(ctTime(s.start))}<small>${st === "live" ? '<span class="pill red">Live</span>' : st === "done" ? '<span class="pill done">Done</span>' : isNext ? '<span class="pill next">Next</span>' : ""}</small></div></div>`;
   }
-  h += `</div><div class="note">Times come from Jolpica-F1 and are checked against OpenF1. Session lengths are estimates (practice and qualifying 1 hr, race 2 hr), used only to mark a session live or done.</div></section>`;
+  h += `</div></section>`;
   // track info
   const m = DATA.meeting || {};
   h += `<section id="track-sec"><div class="head"><h2>Track info</h2><span class="note">${esc(m.circuit_short_name || n.circuit.locality)}</span></div><div class="facts">
@@ -448,10 +458,10 @@ function viewStandings(){
     h += `<tr class="${r.pos === 1 ? "p1" : ""} ${state === "champ" ? "champ" : ""} ${state === "out" ? "out" : ""}"><td class="pos">${r.pos}</td><td class="l drv">${dot(teamColor(r.id))}${esc(r.name)}</td>
       <td class="n"><b>${pts(r.pts)}</b></td><td class="n">${r.pos === 1 ? "" : "-" + pts(C[0].pts - r.pts)}</td><td class="n hide-sm">${r.wins}</td><td class="n">${pts(t.best)}</td><td><span class="st ${state}">${stateLabel(state)}</span></td></tr>`;
   }
-  h += `</tbody></table></div><div class="note">A team can score at most ${esc(pts(43))} a race (a 1-2) and ${esc(pts(15))} a sprint, so ${esc(pts(T.teams.maxLeft))} is still on the table.</div></section>`;
+  h += `</tbody></table></div></section>`;
   h += viewResults();
-  h += mathSection(T.drivers, "drv-math", "Drivers' title path");
-  h += mathSection(T.teams, "con-math", "Constructors' title path");
+  h += mathSection(T.drivers, "drv-math", "Drivers' title path", false);
+  h += mathSection(T.teams, "con-math", "Constructors' title path", true);
   h += viewTeammates();
   return h;
 }
@@ -462,20 +472,19 @@ function verdict(t, label){
 }
 function maxNote(t){
   if (!t) return "";
-  return `${t.racesLeft} race${t.racesLeft === 1 ? "" : "s"}${t.sprintsLeft ? " and " + t.sprintsLeft + " sprint" + (t.sprintsLeft === 1 ? "" : "s") : ""} left: up to ${pts(t.maxLeft)} points for a driver. Ties go to countback (most wins, then most 2nds, and so on).`;
+  return `${t.racesLeft} race${t.racesLeft === 1 ? "" : "s"}${t.sprintsLeft ? " + " + t.sprintsLeft + " sprint" + (t.sprintsLeft === 1 ? "" : "s") : ""} left · ${pts(t.maxLeft)} pts max`;
 }
-function mathSection(t, id, title){
+function mathSection(t, id, title, lockNote){
   if (!t) return "";
   const contenders = t.rows.filter(r => r.state !== "out");
-  let h = `<section id="${id}"><div class="head"><h2>${title}</h2><span class="note">${t.clinched ? "Decided" : contenders.length + " in it"}</span></div>`;
-  h += `<ol class="steps">${t.steps.map(s => `<li>${esc(s)}</li>`).join("")}</ol>`;
-  if (!t.clinched){
-    h += `<div class="list">${contenders.map((r, i) => `<div class="pv-row"><span class="k">P${i + 1}</span><span class="who">${esc(r.name)}<small>${r.state === "leader" ? "Leads on " + pts(r.pts) : r.state === "tie" ? "Can only tie the leader, so countback would decide" : "Needs about " + r.perRace + " more than the leader per race"}</small></span><span class="g">${r.state === "leader" ? pts(r.pts) : "-" + pts(r.gap)}</span></div>`).join("")}</div>`;
-  }
   const f = (t.fights || []).filter(x => x.pos > 1 || !t.clinched);
+  if (t.clinched && !f.length) return "";
+  // once the title is decided, only the fights for the other places are left to show
+  let h = `<section id="${id}"><div class="head"><h2>${t.clinched ? title.replace(/title path$/, "position fights") : title}</h2><span class="note">${t.clinched ? "Title decided" : contenders.length + " in it"}</span></div>`;
+  if (!t.clinched) h += `<ol class="steps">${t.steps.map(s => `<li>${esc(s)}</li>`).join("")}</ol>`;
   if (f.length){
-    h += `<div class="label" style="margin-top:4px">Position fights</div><div class="list">${f.map(x => `<div class="pv-row"><span class="k">P${x.pos}</span><span class="who">${esc(x.ahead)}<small>vs ${esc(x.behind)} (P${x.pos + 1})</small></span><span class="g" style="color:${x.locked ? "var(--faint)" : "var(--red)"}">${x.locked ? "locked" : pts(x.gap) + " pts"}</span></div>`).join("")}</div>`;
-    h += `<div class="note">Locked = the gap is bigger than the ${pts(t.maxLeft)} points left, so the car behind can't get past.</div>`;
+    h += `${t.clinched ? "" : '<div class="label" style="margin-top:4px">Position fights</div>'}<div class="list">${f.map(x => `<div class="pv-row"><span class="k">P${x.pos}</span><span class="who">${esc(x.ahead)}<small>vs ${esc(x.behind)} (P${x.pos + 1})</small></span><span class="g" style="color:${x.locked ? "var(--faint)" : "var(--red)"}">${x.locked ? "locked" : pts(x.gap) + " pts"}</span></div>`).join("")}</div>`;
+    if (lockNote) h += `<div class="note">Locked = gap bigger than the ${pts(t.maxLeft)} pts left.</div>`;
   }
   return h + `</section>`;
 }
@@ -503,7 +512,7 @@ function viewResults(){   // "Race results" dropdown on the Standings tab
   for (const r of shown){
     const w = r.results[0], pole = r.quali[0], fl = r.results.find(x => x.fl), dnf = r.results.filter(x => x.dnf);
     const key = "r" + r.round, open = OPEN.has(key);
-    h += `<button class="xbar" type="button" data-x="${key}" aria-expanded="${open}"><span class="k">R${r.round}</span><span class="t">${esc(short(r.name))}<small>${esc(ctDay(r.date))}${r.sprint.length ? " · Sprint weekend" : ""}</small></span><span class="r">${dot(color(w))}${esc(w ? w.code : "")}<small>winner</small></span></button>
+    h += `<button class="xbar" type="button" data-x="${key}" aria-expanded="${open}"><span class="k">R${r.round}</span><span class="t">${esc(short(r.name))}<small>${esc(ctDay(r.date))}${r.sprint.length ? " · Sprint weekend" : ""}</small></span><span class="r">${dot(color(w))}${esc(w ? w.code : "")}</span></button>
       <div class="xdetail" id="x-${key}" ${open ? "" : "hidden"}>
         <div class="facts"><div><span>Pole</span><b>${esc(pole ? pole.name : "n/a")}${pole && pole.q ? " " + esc(pole.q) : ""}</b></div>
         <div><span>Fastest lap</span><b>${esc(fl ? fl.name + " " + (fl.flTime || "") : "n/a")}</b></div>
@@ -513,7 +522,7 @@ function viewResults(){   // "Race results" dropdown on the Standings tab
         ${r.sprint.length ? `<div class="label">Sprint</div>${resTable(r.sprint, true)}` : ""}
       </div>`;
   }
-  h += `</div>${left > 0 || shown.length > 5 ? `<div class="morebar">${left > 0 ? `<button type="button" class="loadmore" id="res-more">Load ${Math.min(5, left)} more <small>${left} earlier race${left === 1 ? "" : "s"}</small></button>` : ""}${shown.length > 5 ? `<button type="button" class="loadmore less" id="res-less">Collapse <small>back to latest 5</small></button>` : ""}</div>` : ""}<div class="note">+/- compares grid slot to finish (a pit lane start counts as the back of the grid). DNF = didn't finish or wasn't classified, including DNS and DSQ. Purple badge = fastest lap.</div></section>`;
+  h += `</div>${left > 0 || shown.length > 5 ? `<div class="morebar">${left > 0 ? `<button type="button" class="loadmore" id="res-more">Load ${Math.min(5, left)} more <small>${left} earlier race${left === 1 ? "" : "s"}</small></button>` : ""}${shown.length > 5 ? `<button type="button" class="loadmore less" id="res-less">Collapse <small>back to latest 5</small></button>` : ""}</div>` : ""}<div class="note">+/- = places gained from grid · DNF includes DNS/DSQ · FL = fastest lap</div></section>`;
   return h;
 }
 function mover(rows){
@@ -547,14 +556,14 @@ function viewTeammates(){
       ${duel("Quali", b.q[0], b.q[1])}${duel("Race", b.r[0], b.r[1])}${duel("Points", b.pts[0], b.pts[1], true)}</span></button>
       <div class="xdetail" id="x-${key}" ${open ? "" : "hidden"}>
         <div class="facts"><div><span>${esc(b.a.name)}</span><b>${b.a.races} races, ${pts(b.pts[0])} pts</b></div><div><span>${esc(b.b.name)}</span><b>${b.b.races} races, ${pts(b.pts[1])} pts</b></div></div>
-        ${b.others.length ? `<div class="note">Also drove for ${esc(b.name)}: ${esc(b.others.map(o => o.name + " (" + o.races + ")").join(", "))}. Duels only use races where both main drivers raced.</div>` : ""}
+        ${b.others.length ? `<div class="note">Also: ${esc(b.others.map(o => o.name.split(" ").slice(-1)[0] + " (" + o.races + " race" + (o.races === 1 ? "" : "s") + ")").join(", "))}</div>` : ""}
         <div class="tbl-wrap"><table><thead><tr><th>Rd</th><th class="l">Race</th><th>Q ${esc(b.a.code)}</th><th>Q ${esc(b.b.code)}</th><th>${esc(b.a.code)}</th><th>${esc(b.b.code)}</th></tr></thead><tbody>
         ${[...b.rounds].reverse().map(x => `<tr><td class="n">${x.round}</td><td class="l">${esc(short(x.name))}</td><td class="n" style="${x.q === 0 ? "color:var(--red);font-weight:600" : ""}">${x.qa ?? "-"}</td><td class="n" style="${x.q === 1 ? "color:var(--red);font-weight:600" : ""}">${x.qb ?? "-"}</td>
           <td class="n" style="${x.r === 0 ? "color:var(--red);font-weight:600" : ""}">${esc(x.fa)}</td><td class="n" style="${x.r === 1 ? "color:var(--red);font-weight:600" : ""}">${esc(x.fb)}</td></tr>`).join("")}
         </tbody></table></div><div class="note">Red = won that duel. Finishing letters: R retired, D disqualified, W withdrew, N not classified.</div>
       </div>`;
   }
-  h += `</div><div class="note">Kings = most one-sided garages: share of quali and race duels won (a race only counts when both cars are classified). Black bar = the first driver named, red bar = the second. Points include sprints.</div></section>`;
+  h += `</div><div class="note">Kings = most one-sided garages · black bar = first driver, red = second</div></section>`;
   return h;
 }
 function duel(label, a, b, isPts){
@@ -602,7 +611,7 @@ async function jall(path, key){
 async function histLoad(y){
   const body = $("hist-body"); if (!body) return;
   let s = HIST[y];
-  if (!s){ try { s = JSON.parse(localStorage.getItem("rl-hist-v2-" + y) || "null"); } catch (_) {} }
+  if (!s){ try { s = JSON.parse(localStorage.getItem("rl-hist-v3-" + y) || "null"); } catch (_) {} }
   if (!s){   // saved copy on this site first (instant), live API as the fallback
     try { const r = await fetch(`history/${y}.json`); if (r.ok){ const d = await r.json(); s = summarize(y, d.ds, d.cs, d.races, d.sprints); } } catch (_) {}
   }
@@ -614,7 +623,7 @@ async function histLoad(y){
       const races = await jall(`${y}/results`, "Results");
       const sprints = y >= 2021 ? await jall(`${y}/sprint`, "SprintResults") : [];
       s = summarize(y, ds, cs, races, sprints);
-      try { localStorage.setItem("rl-hist-v2-" + y, JSON.stringify(s)); } catch (_) {}
+      try { localStorage.setItem("rl-hist-v3-" + y, JSON.stringify(s)); } catch (_) {}
     } catch (e){
       if (HIST_YEAR === y && $("hist-body")) $("hist-body").innerHTML = `<div class="empty">Couldn't load ${y} from Jolpica-F1 (${esc(e.message)}). <button type="button" class="more-txt" id="hist-retry">Try again</button></div>`;
       return;
@@ -649,7 +658,7 @@ function histTeammates(R, SP, T){
   for (const t of Object.values(teams)){
     const ds = Object.values(t.drivers).sort((a, b) => b.races - a.races || b.pts - a.pts);
     if (ds.length < 2) continue;
-    const [a, b] = ds, bt = {name: t.name, a, b, others: ds.slice(2).map(d => d.name + " (" + d.races + ")"), g: [0, 0], r: [0, 0], rounds: [], pts: [a.pts, b.pts]};
+    const [a, b] = ds, bt = {name: t.name, a, b, others: ds.slice(2).map(d => d.name.split(" ").slice(-1)[0] + " (" + d.races + " race" + (d.races === 1 ? "" : "s") + ")"), g: [0, 0], r: [0, 0], rounds: [], pts: [a.pts, b.pts]};
     R.forEach(r => {
       const xa = r.res.find(x => x.name === a.name && x.team === t.name), xb = r.res.find(x => x.name === b.name && x.team === t.name);
       if (!xa || !xb) return;
@@ -727,8 +736,8 @@ function histHTML(s){
     ${c && p2 ? `<div class="note">${esc(c.name)} beat ${esc(p2.name)} by ${pts(c.pts - p2.pts)} point${c.pts - p2.pts === 1 ? "" : "s"}.</div>` : ""}</div></section>`;
   h += `<section id="hst-sec" data-open="1"><div class="head"><h2>Biggest stories</h2><span class="note">${s.y}</span></div><ol class="stories">
     ${web.map(x => `<li class="web"><b>${esc(x.title)}</b><span>${esc(x.text)}</span><small>Researched · <a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.src)}</a></small></li>`).join("")}
-    ${auto.map(x => `<li><b>${esc(x.title)}</b><span>${esc(x.text)}</span><small>From the numbers</small></li>`).join("")}</ol>
-    <div class="note">Red-edged stories were researched and link to their source. The rest are picked automatically from the season's results (title margin, dominance, comebacks, close finishes, chaos), so they show what the numbers say, not off-track drama.</div></section>`;
+    ${auto.map(x => `<li><b>${esc(x.title)}</b><span>${esc(x.text)}</span></li>`).join("")}</ol>
+    <div class="note">Red edge = researched, with source · others come from the results</div></section>`;
   h += `<section id="hd-sec"><div class="head"><h2>Drivers</h2><span class="note">Final standings</span></div><div class="tbl-wrap"><table>
     <thead><tr><th>#</th><th class="l">Driver</th><th>Pts</th><th>Wins</th></tr></thead><tbody>
     ${s.drivers.map(d => `<tr class="${d.pos === 1 ? "p1 champ" : ""}"><td class="pos">${esc(d.pos || d.pt)}</td><td class="l drv"><span class="full">${esc(d.name)}</span><span class="sur">${esc(d.name.split(" ").slice(-1)[0])}</span><small>${esc(d.team)}</small></td><td class="n"><b>${pts(d.pts)}</b></td><td class="n">${d.wins}</td></tr>`).join("")}
@@ -747,14 +756,14 @@ function histHTML(s){
         ${duel("Grid", b.g[0], b.g[1])}${duel("Race", b.r[0], b.r[1])}${duel("Points", b.pts[0], b.pts[1], true)}</span></button>
         <div class="xdetail" id="x-${key}" ${open ? "" : "hidden"}>
           <div class="facts"><div><span>${esc(b.a.name)}</span><b>${b.a.races} races, ${pts(b.pts[0])} pts</b></div><div><span>${esc(b.b.name)}</span><b>${b.b.races} races, ${pts(b.pts[1])} pts</b></div></div>
-          ${b.others.length ? `<div class="note">Also drove for ${esc(b.name)}: ${esc(b.others.join(", "))}. Duels only use races where both main drivers raced for the team.</div>` : ""}
+          ${b.others.length ? `<div class="note">Also: ${esc(b.others.join(", "))}</div>` : ""}
           <div class="tbl-wrap"><table><thead><tr><th>Rd</th><th class="l">Race</th><th>Grid ${esc(sur(b.a.name).slice(0, 3).toUpperCase())}</th><th>Grid ${esc(sur(b.b.name).slice(0, 3).toUpperCase())}</th><th>${esc(sur(b.a.name).slice(0, 3).toUpperCase())}</th><th>${esc(sur(b.b.name).slice(0, 3).toUpperCase())}</th></tr></thead><tbody>
           ${b.rounds.map(x => `<tr><td class="n">${x.round}</td><td class="l">${esc(short(x.name))}</td><td class="n" style="${x.g === 0 ? "color:var(--red);font-weight:600" : ""}">${x.ga || "PL"}</td><td class="n" style="${x.g === 1 ? "color:var(--red);font-weight:600" : ""}">${x.gb || "PL"}</td>
             <td class="n" style="${x.r === 0 ? "color:var(--red);font-weight:600" : ""}">${esc(x.fa)}</td><td class="n" style="${x.r === 1 ? "color:var(--red);font-weight:600" : ""}">${esc(x.fb)}</td></tr>`).join("")}
           </tbody></table></div>
         </div>`;
     });
-    h += `</div><div class="note">Grid = starting slot (qualifying plus any penalties); full qualifying data isn't available for older seasons, so this is the fair comparison back to 1950. Race duels only count when both cars were classified. Points are points scored${s.y < 1991 ? " (before 1991 not all of them counted toward the title)" : ""}. Black bar = first driver named, red = second. Red in the table = won that duel. R = didn't finish, PL = pit lane or didn't start.</div></section>`;
+    h += `</div><div class="note">Grid = starting slot · red = won that duel · R = retired, PL = pit lane or no start</div></section>`;
   }
   h += `<section id="hr-sec"><div class="head"><h2>Race winners</h2><span class="note">${s.nRaces} races</span></div><div class="list">
     ${s.races.map(r => `<div class="lrow"><div class="t">R${r.round} ${esc(short(r.name))}<small>${esc(new Date(r.date + "T12:00:00Z").toLocaleDateString("en-US", {month: "short", day: "numeric", timeZone: "UTC"}))}</small></div><div class="r">${esc(r.winner.split(" ").slice(-1)[0])}<small>${esc(r.team)}${r.grid ? " · from P" + r.grid : r.grid === 0 ? " · from pit lane" : ""}</small></div></div>`).join("")}
@@ -807,8 +816,7 @@ function enhance(){
 /* header line: when this was updated and roughly when the next update lands */
 function updLine(){
   const c = DATA.status?.checked; if (!c) return;
-  const next = new Date(new Date(c).getTime() + (DATA.cadence || 60) * 60000);
-  $("upd").innerHTML = `<span>Updated <b>${esc(ctTime(c))}</b></span><span>Next <b>~${esc(ctTime(next))}</b></span>${(DATA.cadence || 60) <= 10 ? "<span>Race weekend: every 10 min</span>" : ""}`;
+  $("upd").innerHTML = `<span>Updated <b>${esc(ctTime(c))}</b></span>`;
 }
 /* status line: says in plain words why data might be old */
 async function status(){
@@ -836,7 +844,7 @@ function tickHeader(){
   const t = ns.live ? ns.s.end : ns.s.start;
   $("cd-l").textContent = ns.live ? "Live: " + SESS_SHORT[ns.s.name] : SESS_SHORT[ns.s.name] + " in";
   $("cd-t").textContent = dur(new Date(t) - Date.now());
-  $("cd-s").textContent = ns.live ? "ends ~" + ctTime(t) : ct(ns.s.start, {weekday: "short", hour: "numeric", minute: "2-digit"}) + " CT";
+  $("cd-s").textContent = ns.live ? "ends ~" + ctTime(t) : ct(ns.s.start, {weekday: "short", hour: "numeric", minute: "2-digit"}) + " " + tzAbbr(ns.s.start);
 }
 function tickRace(){
   const el = $("race-cd"); if (!el || !DATA.next) return;
