@@ -216,7 +216,7 @@ tr.out td{color:var(--faint)}
 
 .sur{display:none}
 @media (max-width:560px){.hide-sm{display:none}td.drv small{display:none}.full{display:none}.sur{display:inline}th,td{padding:7px 6px}}
-@media (max-width:560px){.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) 30px;gap:4px}.tabs a{text-align:center;padding:5px 2px}.theme-btn{margin-left:0}}
+@media (max-width:560px){.tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) 30px;gap:4px}.tabs a{text-align:center;padding:5px 2px}.theme-btn{margin-left:0}}
 .kings{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .king{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:12.5px}
 .king b{font-family:var(--f-display);font-weight:600}
@@ -271,7 +271,7 @@ footer a{color:var(--muted)}
   <div class="upd num" id="upd"></div>
   <div class="stat-line" id="stat-line" hidden></div>
   <nav class="tabs" aria-label="Pages">
-    <a href="index.html" data-p="next"><span class="full">Next Race</span><span class="sur">Next</span></a><a href="standings.html" data-p="standings"><span class="full">Standings</span><span class="sur">Points</span></a><a href="results.html" data-p="results">Results</a><a href="history.html" data-p="history">History</a>
+    <a href="index.html" data-p="next"><span class="full">Next Race</span><span class="sur">Next</span></a><a href="standings.html" data-p="standings">Standings</a><a href="history.html" data-p="history">History</a>
     <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch theme">🌙</button>
   </nav>
 </header></div>
@@ -435,6 +435,7 @@ function viewStandings(){
       <td class="n"><b>${pts(r.pts)}</b></td><td class="n">${r.pos === 1 ? "" : "-" + pts(C[0].pts - r.pts)}</td><td class="n hide-sm">${r.wins}</td><td class="n">${pts(t.best)}</td><td><span class="st ${state}">${stateLabel(state)}</span></td></tr>`;
   }
   h += `</tbody></table></div><div class="note">A team can score at most ${esc(pts(43))} a race (a 1-2) and ${esc(pts(15))} a sprint, so ${esc(pts(T.teams.maxLeft))} is still on the table.</div></section>`;
+  h += viewResults();
   h += mathSection(T.drivers, "drv-math", "Drivers' title path");
   h += mathSection(T.teams, "con-math", "Constructors' title path");
   h += viewTeammates();
@@ -474,16 +475,16 @@ document.addEventListener("click", e => {
     const sec = $("res-sec"); if (sec) sec.scrollIntoView({block: "start", behavior: "smooth"});
   }
 });
-function viewResults(){
+function viewResults(){   // "Race results" dropdown on the Standings tab
   const R = DATA.results || [];
-  if (!R.length) return `<div class="empty">No races run yet in ${DATA.season}.</div>`;
+  if (!R.length) return "";
   const winners = {}; R.forEach(r => { const w = r.results[0]; if (w) winners[w.name] = (winners[w.name] || 0) + 1; });
   const top = Object.entries(winners).sort((a, b) => b[1] - a[1])[0];
-  let h = `<div class="strip"><div class="kpi hot"><span class="label">Races run</span><b>${R.length}</b><small>of ${DATA.schedule.length || "?"}</small></div>
+  let h = `<section id="res-sec"><div class="head"><h2>Race results</h2><span class="note">Newest first. Tap a race</span></div>
+    <div class="strip"><div class="kpi hot"><span class="label">Races run</span><b>${R.length}</b><small>of ${DATA.schedule.length || "?"}</small></div>
     <div class="kpi"><span class="label">Winners</span><b>${Object.keys(winners).length}</b><small>different drivers</small></div>
     <div class="kpi"><span class="label">Most wins</span><b>${esc(top ? top[0].split(" ").slice(-1)[0] : "-")}</b><small>${top ? top[1] + " wins" : ""}</small></div></div>`;
-  h += liveBlock();
-  h += `<section data-fixed="1" id="res-sec"><div class="head"><h2>Every race</h2><span class="note">Newest first. Tap a race</span></div><div class="list">`;
+  h += `<div class="list">`;
   const shown = [...R].reverse().slice(0, RES_SHOWN), left = R.length - shown.length;
   for (const r of shown){
     const w = r.results[0], pole = r.quali[0], fl = r.results.find(x => x.fl), dnf = r.results.filter(x => x.dnf);
@@ -710,7 +711,7 @@ function histHTML(s){
     <div class="verdict"><b>Drivers:</b> ${esc(c ? c.name : "n/a")}${c ? ` (${esc(c.team)}), ${pts(c.pts)} pts, ${c.wins} win${c.wins === 1 ? "" : "s"}` : ""}</div>
     <div class="verdict"><b>Constructors:</b> ${t ? esc(t.name) + ", " + pts(t.pts) + " pts" : "not awarded until 1958"}</div>
     ${c && p2 ? `<div class="note">${esc(c.name)} beat ${esc(p2.name)} by ${pts(c.pts - p2.pts)} point${c.pts - p2.pts === 1 ? "" : "s"}.</div>` : ""}</div></section>`;
-  h += `<section data-fixed="1"><div class="head"><h2>Biggest stories</h2><span class="note">${s.y}</span></div><ol class="stories">
+  h += `<section id="hst-sec" data-open="1"><div class="head"><h2>Biggest stories</h2><span class="note">${s.y}</span></div><ol class="stories">
     ${web.map(x => `<li class="web"><b>${esc(x.title)}</b><span>${esc(x.text)}</span><small>Researched · <a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.src)}</a></small></li>`).join("")}
     ${auto.map(x => `<li><b>${esc(x.title)}</b><span>${esc(x.text)}</span><small>From the numbers</small></li>`).join("")}</ol>
     <div class="note">Red-edged stories were researched and link to their source. The rest are picked automatically from the season's results (title margin, dominance, comebacks, close finishes, chaos), so they show what the numbers say, not off-track drama.</div></section>`;
@@ -751,7 +752,7 @@ function histHTML(s){
 function render(){
   $("eb-season").textContent = DATA.season;
   document.querySelectorAll(".tabs a").forEach(a => { if (a.dataset.p === PAGE) a.setAttribute("aria-current", "page"); });
-  const v = {next: viewNext, standings: viewStandings, results: viewResults, teammates: viewTeammates, history: viewHistory}[PAGE];
+  const v = {next: viewNext, standings: viewStandings, history: viewHistory}[PAGE];
   $("view").innerHTML = v ? v() : "";
   enhance(); updLine(); status(); tickRace();
   if (PAGE === "history") histLoad(HIST_YEAR);
@@ -775,7 +776,7 @@ function enhance(){
     [...sec.children].filter(c => c !== head).forEach(c => body.appendChild(c)); sec.appendChild(body);
     head.classList.add("tog"); head.setAttribute("role", "button"); head.tabIndex = 0;
     const set = c => { sec.classList.toggle("closed", c); head.setAttribute("aria-expanded", String(!c)); };
-    set(key in closedSaved ? !!closedSaved[key] : true);
+    set(key in closedSaved ? !!closedSaved[key] : sec.dataset.open !== "1");   // data-open="1" sections start open
     const flip = () => { const c = !sec.classList.contains("closed"); set(c); closedSaved[key] = c; try { localStorage.setItem(CKEY, JSON.stringify(closedSaved)); } catch (_) {} };
     head.addEventListener("click", flip);
     head.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); flip(); } });

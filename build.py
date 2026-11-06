@@ -373,14 +373,14 @@ def write_site(data):
     os.makedirs(OUT, exist_ok=True)
     blob = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     pages = {"index.html": ("next", "Next Race"), "standings.html": ("standings", "Standings"),
-             "results.html": ("results", "Results"),
              "history.html": ("history", "History")}
     for fn, (pid, title) in pages.items():
         html = tpl.replace("__PAGE__", pid).replace("__TITLE__", title).replace("__DATA__", blob)
         open(os.path.join(OUT, fn), "w", encoding="utf-8", newline="\n").write(html)
-    # Teammates moved into Standings: old links forward there
-    open(os.path.join(OUT, "teammates.html"), "w", encoding="utf-8").write(
-        '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=standings.html"><title>F1 Tracker</title><a href="standings.html">Standings</a>')
+    # Teammates and Results moved into Standings: old links forward there
+    for old in ("teammates.html", "results.html"):
+        open(os.path.join(OUT, old), "w", encoding="utf-8").write(
+            '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=standings.html"><title>F1 Tracker</title><a href="standings.html">Standings</a>')
     open(os.path.join(OUT, "data.json"), "w", encoding="utf-8").write(json.dumps(data, ensure_ascii=False, separators=(",", ":")))
     hist = os.path.join(HERE, "history")   # saved finished seasons for the History tab
     if os.path.isdir(hist):
