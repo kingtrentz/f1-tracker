@@ -3,7 +3,7 @@
 Live site: https://kingtrentz.github.io/f1-tracker/
 
 Fan project. Not affiliated with Formula 1, the FIA, or any team.
-built by kingtrents⚡️ x claude 🫡
+by kingtrentz⚡️ x claude 🫡
 
 ## How it runs
 - GitHub Actions wakes every 10 minutes (`.github/workflows/update.yml`).
