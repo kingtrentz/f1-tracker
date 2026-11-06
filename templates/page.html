@@ -399,8 +399,9 @@ function liveBlock(){
 function latestBlock(){
   const pv = DATA.provisional, R = DATA.results || [];
   if (pv && pv.rows && pv.rows.length && Date.now() - new Date(pv.end) < 30 * 3600 * 1000){
-    return `<section id="last-sec" data-open="1"><div class="head"><h2>Latest result</h2><span class="note">${esc(pv.session)} · provisional</span></div>${provTable(pv.rows, pv.session)}
-      <div class="note">Posted by OpenF1 shortly after the session ends. After the race, the official result from Jolpica-F1 replaces it.</div></section>`;
+    const counts = /Qualifying|Sprint|Race/.test(pv.session);   // practice can't be penalised, so no "provisional" label there
+    return `<section id="last-sec" data-open="1"><div class="head"><h2>Latest result</h2><span class="note">${esc(pv.session)}${counts ? " · provisional" : ""}</span></div>${provTable(pv.rows, pv.session)}
+      ${counts ? `<div class="note">Timing order from OpenF1 as the session ended. Penalties or disqualifications can still change it; the official result replaces it after the race.</div>` : ""}</section>`;
   }
   const r = R[R.length - 1]; if (!r) return "";
   const w = r.results[0], pole = r.quali[0], fl = r.results.find(x => x.fl), dnf = r.results.filter(x => x.dnf);
