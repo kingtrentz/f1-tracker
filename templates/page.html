@@ -391,11 +391,24 @@ function liveBlock(){
     h += `<section data-fixed="1" id="live-sec"><div class="livebox"><h3>${esc(ns.s.name)} is on now</h3>
       <div class="note" id="live-note">Checking OpenF1 from your browser every minute...</div><div id="live-rows"></div></div></section>`;
   }
-  if (pv && pv.rows && pv.rows.length && Date.now() - new Date(pv.end) < 30 * 3600 * 1000){
-    h += `<section id="prov-sec"><div class="head"><h2>${esc(pv.session)} result</h2><span class="note">Provisional, OpenF1</span></div>${provTable(pv.rows, pv.session)}
-      <div class="note">Posted by OpenF1 shortly after the session. The official result on the Results tab replaces this once Jolpica-F1 has it.</div></section>`;
-  }
+  h += latestBlock();
   return h;
+}
+/* "Latest result" dropdown above the weekend schedule: newest session from OpenF1 on race weekends,
+   otherwise the last race's official result. Starts open so it's the first thing you see. */
+function latestBlock(){
+  const pv = DATA.provisional, R = DATA.results || [];
+  if (pv && pv.rows && pv.rows.length && Date.now() - new Date(pv.end) < 30 * 3600 * 1000){
+    return `<section id="last-sec" data-open="1"><div class="head"><h2>Latest result</h2><span class="note">${esc(pv.session)} · provisional</span></div>${provTable(pv.rows, pv.session)}
+      <div class="note">Posted by OpenF1 shortly after the session ends. After the race, the official result from Jolpica-F1 replaces it.</div></section>`;
+  }
+  const r = R[R.length - 1]; if (!r) return "";
+  const w = r.results[0], pole = r.quali[0], fl = r.results.find(x => x.fl), dnf = r.results.filter(x => x.dnf);
+  return `<section id="last-sec" data-open="1"><div class="head"><h2>Latest result</h2><span class="note">${esc(short(r.name))} · ${esc(ct(r.date, {month: "short", day: "numeric"}))}</span></div>
+    <div class="facts"><div><span>Winner</span><b>${esc(w ? w.name : "n/a")}</b></div><div><span>Pole</span><b>${esc(pole ? pole.name : "n/a")}</b></div>
+    <div><span>Fastest lap</span><b>${esc(fl ? fl.name + " " + (fl.flTime || "") : "n/a")}</b></div><div><span>DNFs</span><b>${dnf.length ? esc(dnf.map(x => x.code).join(", ")) : "none"}</b></div></div>
+    ${resTable(r.results)}
+    ${r.sprint.length ? `<div class="label">Sprint</div>${resTable(r.sprint, true)}` : ""}</section>`;
 }
 function lap(v){ if (v == null) return ""; const m = Math.floor(v / 60), x = (v - m * 60).toFixed(3).padStart(6, "0"); return m ? `${m}:${x}` : x; }
 function provTable(rows, session){
