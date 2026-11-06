@@ -53,7 +53,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 auto}
 .brand > div{min-width:0}
 .logo{width:38px;height:38px;flex:none;display:block}
-.logo.emo{display:flex;align-items:center;justify-content:center;font-size:24px;line-height:1;padding-bottom:6px;box-sizing:border-box;border-radius:9px;background:var(--band-2);border:1px solid var(--band-line);box-shadow:inset 0 -2px 0 var(--red)}
+.logo.emo{display:block;font-size:36px;line-height:1;flex:none;width:auto;height:auto}
 h1{font-size:23px;line-height:1.05;font-weight:800;letter-spacing:.03em;text-transform:uppercase}
 h1 span{color:var(--red)}
 .sig{font-family:var(--f-body);font-size:8.5px;color:var(--band-muted);letter-spacing:.02em;margin-top:2px;white-space:nowrap;opacity:.8}
@@ -73,7 +73,7 @@ h1 span{color:var(--red)}
 .tabs a:hover{border-color:var(--red)}
 .tabs a[aria-current="page"]{background:var(--red);border-color:var(--red);color:var(--on-red)}
 .theme-btn{margin-left:auto;flex:none;width:30px;height:30px;border-radius:999px;border:1px solid var(--band-line);background:var(--band-2);color:var(--band-ink);font-size:14px;line-height:1;display:inline-flex;align-items:center;justify-content:center;padding:0}
-@media (max-width:560px){h1{font-size:20px}.cd b{font-size:17px}.logo{width:34px;height:34px}.logo.emo{font-size:21px;padding-bottom:5px}.tabs a{padding:5px 8px;font-size:11px}}
+@media (max-width:560px){h1{font-size:20px}.cd b{font-size:17px}.logo.emo{font-size:31px}.tabs a{padding:5px 8px;font-size:11px}}
 @media (max-width:370px){.tabs a{padding:4px 7px;font-size:10.5px}}
 
 /* ===== sections ===== */
@@ -261,7 +261,7 @@ footer a{color:var(--muted)}
 <div class="band"><header>
   <div class="hdr">
     <div class="brand">
-      <span class="logo emo" aria-hidden="true">🏎️</span>
+      <span class="logo emo" id="logo" aria-hidden="true">🏎️</span>
       <div><h1>F1 <span>Tracker</span></h1><div class="sig">by kingtrentz⚡️ x claude</div></div>
     </div>
     <div class="cd" id="cd" hidden><span class="label" id="cd-l">Next</span><b id="cd-t">--:--:--</b><small id="cd-s"></small></div>
@@ -284,6 +284,23 @@ footer a{color:var(--muted)}
 <script>
 let DATA = __DATA__;
 const PAGE = "__PAGE__";
+function centerLogo(){   // the car sits at a different height in each phone's emoji set, so find its pixels and move it to the middle of the title block
+  try {
+    const el = $("logo"), box = document.querySelector(".brand > div"); if (!el || !box) return;
+    el.style.transform = "";
+    const cs = getComputedStyle(el), size = parseFloat(cs.fontSize), W = Math.ceil(size * 2), H = Math.ceil(size * 3), y0 = Math.ceil(size * 2);
+    const g = document.createElement("canvas").getContext("2d", {willReadFrequently: true}); g.canvas.width = W; g.canvas.height = H;
+    g.font = size + "px " + cs.fontFamily; g.textBaseline = "alphabetic"; g.fillText(el.textContent, 0, y0);
+    const m = g.measureText(el.textContent), A = m.fontBoundingBoxAscent, D = m.fontBoundingBoxDescent; if (!A) return;
+    const px = g.getImageData(0, 0, W, H).data; let top = -1, bot = -1;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (px[(y * W + x) * 4 + 3] > 40){ if (top < 0) top = y; bot = y; break; }
+    if (top < 0) return;
+    const r = el.getBoundingClientRect(), b = box.getBoundingClientRect();
+    const base = r.top + (r.height - (A + D)) / 2 + A;   // where the page puts the baseline (line-height 1)
+    const inkMid = base + ((top + bot) / 2 - y0);
+    el.style.transform = `translateY(${Math.round(((b.top + b.bottom) / 2 - inkMid) * 2) / 2}px)`;
+  } catch (e) {}
+}
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 // every time shows in the viewer's own zone (Eastern viewers see ET, and so on)
@@ -913,5 +930,6 @@ setInterval(() => { if (nextSession()?.live) liveStart(); else liveStop(); }, 60
   paint();
 })();
 render();
+centerLogo(); if (document.fonts) document.fonts.ready.then(centerLogo); addEventListener("resize", centerLogo);
 </script>
 </body></html>
