@@ -54,8 +54,6 @@ button{font:inherit;color:inherit;cursor:pointer}
 .brand > div{min-width:0}
 .logo{width:38px;height:38px;flex:none;display:block}
 .logo.emo{display:flex;align-items:center;justify-content:center;font-size:30px;line-height:1;border-radius:9px;background:var(--band-2);border:1px solid var(--band-line);box-shadow:inset 0 -2px 0 var(--red)}
-.eyebrow{font-family:var(--f-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--band-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.eyebrow b{color:var(--red);font-weight:600}
 h1{font-size:23px;line-height:1.05;font-weight:700;letter-spacing:.03em;text-transform:uppercase}
 h1 span{color:var(--red)}
 .cd{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:1px;text-align:right}
@@ -264,7 +262,7 @@ footer a{color:var(--muted)}
   <div class="hdr">
     <div class="brand">
       <span class="logo emo" aria-hidden="true">🏎️</span>
-      <div><div class="eyebrow" id="eyebrow"><span id="eb-season"></span> season</div><h1>F1 <span>Tracker</span></h1></div>
+      <div><h1>F1 <span>Tracker</span></h1></div>
     </div>
     <div class="cd" id="cd" hidden><span class="label" id="cd-l">Next</span><b id="cd-t">--:--:--</b><small id="cd-s"></small></div>
   </div>
@@ -773,7 +771,6 @@ function histHTML(s){
 
 /* ================= render + behaviors ================= */
 function render(){
-  $("eb-season").textContent = DATA.season;
   document.querySelectorAll(".tabs a").forEach(a => { if (a.dataset.p === PAGE) a.setAttribute("aria-current", "page"); });
   const v = {next: viewNext, standings: viewStandings, history: viewHistory}[PAGE];
   $("view").innerHTML = v ? v() : "";
