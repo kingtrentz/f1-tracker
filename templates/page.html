@@ -248,6 +248,9 @@ tr.out td{color:var(--faint)}
 .livebox{border:1px solid var(--red-line);border-radius:10px;padding:10px 12px;display:grid;gap:8px;background:var(--red-soft)}
 .livebox h3{font-size:15px;display:flex;align-items:center;gap:8px}
 .livebox h3::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--red);animation:ping 1.6s infinite}
+.norace{display:grid;gap:2px;padding:10px 12px;border-radius:8px;background:var(--panel);border:1px solid var(--line-strong);box-shadow:inset 3px 0 0 var(--red)}
+.norace b{font-family:var(--f-display);font-size:16px;font-weight:700}
+.norace span{font-size:12.5px;color:var(--muted)}
 .offseason{font-size:14px;padding:12px 14px;border-radius:8px;background:var(--panel);border:1px solid var(--line-strong);box-shadow:inset 3px 0 0 var(--red)}
 .empty{font-size:13px;color:var(--muted);padding:10px 12px;border:1px dashed var(--line-strong);border-radius:8px}
 /* ghost lap */
@@ -404,7 +407,8 @@ function viewNext(){
   if (!n) return `<div class="offseason"><b>Off-season.</b> The ${(DATA.season || 0) + 1} calendar isn't published yet. Standings and results below stay on ${esc(DATA.season)} until it is, and this page switches over on its own.</div>`;
   const total = (n.season === DATA.season ? DATA.schedule.length : (DATA.nextYearSchedule || []).length) || "?";
   const ns = nextSession();
-  let h = `<section data-fixed="1"><div class="hero">
+  let h = noRaceBanner(n);
+  h += `<section data-fixed="1"><div class="hero">
     <div class="tags"><span class="label">Round <b>${n.round}</b> of ${total} <b>//</b> ${n.season}</span>${n.sprint ? '<span class="pill red">Sprint weekend</span>' : ""}${ns && ns.live ? `<span class="pill red">Live: ${esc(SESS_SHORT[ns.s.name])}</span>` : ""}</div>
     <h3>${esc(n.name)}</h3>
     <div class="where">${esc(n.circuit.name)} · ${esc(n.circuit.locality)}, ${esc(n.circuit.country)}</div>
@@ -413,7 +417,7 @@ function viewNext(){
   </div></section>`;
   h += liveBlock();
   // schedule
-  h += `<section id="sched-sec"><div class="head"><h2>Weekend schedule</h2><span class="note">${esc(tzAbbr(n.start))}</span></div><div class="list">`;
+  h += `<section id="sched-sec"><div class="head"><h2>Race weekend schedule</h2><span class="note">${esc(tzAbbr(n.start))}</span></div><div class="list">`;
   for (const s of n.sessions){
     const st = sessState(s);
     const isNext = ns && ns.s === s && !ns.live;
@@ -453,6 +457,19 @@ function viewNext(){
   return h;
 }
 
+/* "No race this weekend": the next race isn't in the viewer's current Monday-to-Sunday week */
+function weekOf(d){
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", {timeZone: TZ, year: "numeric", month: "numeric", day: "numeric", weekday: "short"})
+    .formatToParts(new Date(d)).map(x => [x.type, x.value]));
+  const dow = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].indexOf(p.weekday);
+  return Date.UTC(+p.year, +p.month - 1, +p.day - dow);   // that week's Monday
+}
+function noRaceBanner(n){
+  if (weekOf(n.start) === weekOf(Date.now())) return "";
+  const first = n.sessions[0].start, days = Math.round((weekOf(n.start) - weekOf(Date.now())) / (7 * 86400000));
+  return `<section data-fixed="1"><div class="norace"><b>No race this weekend</b>
+    <span>Next: ${esc(short(n.name))} · ${esc(ct(first, {month: "short", day: "numeric"}))} to ${esc(ct(n.start, ct(first, {month: "short"}) === ct(n.start, {month: "short"}) ? {day: "numeric"} : {month: "short", day: "numeric"}))}${days > 1 ? ` · ${days} weeks away` : " · next week"}</span></div></section>`;
+}
 function liveBlock(){
   const ns = nextSession(), pv = DATA.provisional;
   let h = "";
