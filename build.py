@@ -3,7 +3,8 @@ Runs on GitHub Actions (see .github/workflows/update.yml), or by hand: python bu
 1) pulls the season from Jolpica-F1 (schedule, results, qualifying, sprints, standings)
 2) adds session info, weather and quick provisional results from OpenF1
 3) works out title math and teammate battles
-4) writes the four pages + data.json into _site/ for GitHub Pages
+4) adds new qualifying laps to ghost/ for the Ghost Lap tab (ghost.py, OpenF1 positions)
+5) writes the pages + data.json into _site/ for GitHub Pages
 No API keys. No third-party packages (standard library only)."""
 import json, os, sys, time, math, hashlib, datetime as dt, urllib.request, urllib.error, urllib.parse
 
@@ -333,6 +334,11 @@ def main():
         done = rs_year if races_left == 0 and races else rs_year - 1
         for a in fetch_history.ensure([done, done - 1]): print(f"OK saved {a} to history")
     except Exception as e: print(f"NOTE history check skipped ({e})")
+    ghost_ids = []
+    try:   # new qualifying laps for the Ghost Lap tab (the workflow commits ghost/)
+        import ghost
+        ghost_ids = ghost.update(budget=150, sched_now=sched)
+    except Exception as e: print(f"NOTE ghost laps skipped ({type(e).__name__}: {e})")
     ex = openf1_extras(y, nxt)
     data = {
         "season": rs_year, "nextSeason": nxt["season"] if nxt else None,
@@ -342,7 +348,7 @@ def main():
         "standings": std, "title": {"drivers": tm_d, "teams": tm_t},
         "results": races, "teammates": teammates(races, std),
         "racesLeft": races_left, "sprintsLeft": sprints_left,
-        "stories": load_stories(),
+        "stories": load_stories(), "ghost": ghost_ids,
     }
     if data["provisional"] and nxt and any(r["round"] == nxt["round"] for r in races) and data["provisional"]["session"] == "Race":
         data["provisional"] = None   # Jolpica already has the official result
@@ -373,7 +379,7 @@ def write_site(data):
     os.makedirs(OUT, exist_ok=True)
     blob = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     pages = {"index.html": ("next", "Next Race"), "standings.html": ("standings", "Standings"),
-             "history.html": ("history", "History")}
+             "history.html": ("history", "History"), "ghost.html": ("ghost", "Ghost Lap")}
     for fn, (pid, title) in pages.items():
         html = tpl.replace("__PAGE__", pid).replace("__TITLE__", title).replace("__DATA__", blob)
         open(os.path.join(OUT, fn), "w", encoding="utf-8", newline="\n").write(html)
@@ -387,6 +393,11 @@ def write_site(data):
         os.makedirs(os.path.join(OUT, "history"), exist_ok=True)
         for f in os.listdir(hist):
             if f.endswith(".json"): open(os.path.join(OUT, "history", f), "wb").write(open(os.path.join(hist, f), "rb").read())
+    gd = os.path.join(HERE, "ghost")   # saved qualifying laps for the Ghost Lap tab
+    if os.path.isdir(gd):
+        os.makedirs(os.path.join(OUT, "ghost"), exist_ok=True)
+        for f in os.listdir(gd):
+            if f.endswith(".json"): open(os.path.join(OUT, "ghost", f), "wb").write(open(os.path.join(gd, f), "rb").read())
     for f in ("logo.svg",):
         src = os.path.join(HERE, "templates", f)
         if os.path.exists(src): open(os.path.join(OUT, f), "wb").write(open(src, "rb").read())

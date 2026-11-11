@@ -58,13 +58,13 @@ jobs:
       - name: Pull data and build pages
         run: python3 build.py
 
-      - name: Save any newly finished season to the repo
+      - name: Save new history seasons and ghost laps to the repo
         run: |
-          if [ -n "$(git status --porcelain history)" ]; then
+          if [ -n "$(git status --porcelain history ghost)" ]; then
             git config user.name "f1-tracker-bot"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add history
-            git commit -m "Save finished season for the History tab"
+            git add history ghost
+            git commit -m "Save new history seasons / ghost laps"
             git push || echo "push failed, will retry next run"
           fi
 
