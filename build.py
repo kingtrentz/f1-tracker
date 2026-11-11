@@ -22,7 +22,7 @@ RACE_MAX, SPRINT_MAX = 25, 8                  # most points one driver can score
 TEAM_RACE_MAX, TEAM_SPRINT_MAX = 25 + 18, 8 + 7  # a 1-2 finish
 DUR = {"Practice 1": 60, "Practice 2": 60, "Practice 3": 60, "Sprint Qualifying": 45,
        "Sprint": 60, "Qualifying": 60, "Race": 120}   # minutes, used to mark sessions live/done
-ERRS = {"jolpica": [], "openf1": []}
+ERRS = {"jolpica": [], "openf1": [], "meteo": []}
 _last = [0.0]
 
 def get(url, src, tries=3):
@@ -78,6 +78,7 @@ def schedule(year):
         c = r["Circuit"]
         out.append({"round": int(r["round"]), "name": r["raceName"], "season": int(r["season"]),
                     "circuit": {"id": c["circuitId"], "name": c["circuitName"], "locality": c["Location"]["locality"],
+                                "lat": float(c["Location"].get("lat") or 0) or None, "lon": float(c["Location"].get("long") or 0) or None,
                                 "country": c["Location"]["country"]},
                     "sprint": "Sprint" in r, "start": ss[-1]["start"], "sessions": ss})
     return out
@@ -295,6 +296,44 @@ def last_year(nxt):
     except Exception: pass
     return out
 
+# ---------------- race weekend weather (Open-Meteo, free, no key) ----------------
+METEO = "https://api.open-meteo.com/v1/forecast"
+FORECAST_DAYS_OUT = 7     # the forecast appears this many days before the first session
+
+def outlook(nxt):
+    """Forecast for each race day (and each session's hour) from 7 days out; current conditions on race days."""
+    if not nxt or not nxt["circuit"].get("lat"): return None
+    first = parse(nxt["sessions"][0]["start"])
+    if first - NOW > dt.timedelta(days=FORECAST_DAYS_OUT + 1):
+        return {"opens": (first - dt.timedelta(days=FORECAST_DAYS_OUT)).isoformat()}
+    q = urllib.parse.urlencode({"latitude": nxt["circuit"]["lat"], "longitude": nxt["circuit"]["lon"], "timezone": "auto",
+        "temperature_unit": "fahrenheit", "wind_speed_unit": "mph", "forecast_days": 16,
+        "daily": "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max",
+        "hourly": "temperature_2m,precipitation_probability,weather_code,wind_speed_10m",
+        "current": "temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m"})
+    w = get(f"{METEO}?{q}", "meteo")
+    if not w or "daily" not in w: return {"opens": None, "error": True}
+    off = dt.timedelta(seconds=w.get("utc_offset_seconds", 0))
+    D, H = w["daily"], w["hourly"]
+    days, today = {}, (NOW + off).date().isoformat()
+    for s in nxt["sessions"]:
+        loc = parse(s["start"]) + off
+        d = loc.date().isoformat()
+        if d not in D["time"]: continue
+        i = D["time"].index(d)
+        day = days.setdefault(d, {"date": d, "dow": loc.strftime("%a"), "hi": D["temperature_2m_max"][i], "lo": D["temperature_2m_min"][i],
+                                  "rain": D["precipitation_probability_max"][i], "wind": D["wind_speed_10m_max"][i], "code": D["weather_code"][i], "sessions": []})
+        hk = loc.strftime("%Y-%m-%dT%H:00")
+        if hk in H["time"]:
+            j = H["time"].index(hk)
+            day["sessions"].append({"name": s["name"], "temp": H["temperature_2m"][j], "rain": H["precipitation_probability"][j],
+                                    "code": H["weather_code"][j], "wind": H["wind_speed_10m"][j]})
+    c = w.get("current") or {}
+    return {"days": list(days.values()), "today": today, "raceDay": today in days,
+            "current": {"temp": c.get("temperature_2m"), "hum": c.get("relative_humidity_2m"), "precip": c.get("precipitation"),
+                        "code": c.get("weather_code"), "wind": c.get("wind_speed_10m"), "at": c.get("time")},
+            "tz": w.get("timezone_abbreviation"), "checked": NOW.isoformat(timespec="seconds")}
+
 # ---------------- main ----------------
 def main():
     y = NOW.year
@@ -344,7 +383,7 @@ def main():
         "season": rs_year, "nextSeason": nxt["season"] if nxt else None,
         "schedule": full, "next": nxt, "nextYearSchedule": nxt_sched if nxt and nxt["season"] != rs_year else [],
         "lastYear": last_year(nxt), "meeting": ex.get("meeting"), "openf1Sessions": ex.get("openf1Sessions"),
-        "weather": ex.get("weather"), "provisional": ex.get("provisional"), "colors": ex.get("colors"),
+        "weather": ex.get("weather"), "outlook": outlook(nxt), "provisional": ex.get("provisional"), "colors": ex.get("colors"),
         "standings": std, "title": {"drivers": tm_d, "teams": tm_t},
         "results": races, "teammates": teammates(races, std),
         "racesLeft": races_left, "sprintsLeft": sprints_left,

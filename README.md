@@ -10,6 +10,7 @@ by kingtrentz⚡️ x claude
 - Race weekends (12 hours before FP1 until 12 hours after the race): updates every run.
 - Other times: about once an hour.
 - `build.py` pulls Jolpica-F1 + OpenF1 (no keys), builds 4 pages + `data.json`, and GitHub Pages publishes them.
+- Next Race > Track info: race weekend forecast per day (Open-Meteo, free, no key) from 7 days before FP1; on race days it switches to current conditions plus OpenF1 track temperature.
 - Tabs: Next Race, Standings (with race results and teammate H2H), History, Ghost Lap.
 - Ghost Lap: `ghost.py` saves every driver's best qualifying lap of every weekend since 2023 (OpenF1 car positions) into `ghost/`, and the page races any two of them on the track map (one small file per lap in `ghost/laps/`, loaded on demand). New laps are added about 2 hours after each qualifying; `python ghost.py` fetches anything missing.
 - Pages pull the newest `data.json` every 2 minutes while open.

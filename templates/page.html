@@ -440,15 +440,9 @@ function viewNext(){
       <div class="kpi"><span class="label">${ly.year} pole</span><b>${esc((ly.pole || "n/a").split(" ").slice(-1)[0])}</b><small>${esc(ly.poleTime || "")}</small></div>
       <div class="kpi"><span class="label">${ly.year} fastest lap</span><b>${esc((ly.fl || "n/a").split(" ")[0])}</b><small>${esc((ly.fl || "").split(" ").slice(1).join(" "))}</small></div></div>`;
   } else h += `<div class="note">No race here last year, so there's no previous winner to show.</div>`;
+  h += wxBlock(n, w);
   if ((DATA.ghost || []).includes(n.circuit.id)) h += `<a class="glink" href="ghost.html#c=${encodeURIComponent(n.circuit.id)}"><span>Ghost lap<small>Race past pole laps here against each other</small></span></a>`;
   h += `</section>`;
-  // weather
-  if (w){
-    const F = c => c == null ? "n/a" : Math.round(c * 9 / 5 + 32) + "°F";
-    h += `<section id="wx-sec"><div class="head"><h2>Track weather</h2><span class="note">OpenF1, ${esc(ctTime(w.at))}</span></div><div class="strip four">
-      <div class="kpi"><span class="label">Air</span><b>${F(w.air)}</b></div><div class="kpi hot"><span class="label">Track</span><b>${F(w.track)}</b></div>
-      <div class="kpi"><span class="label">Rain</span><b>${w.rain ? "Yes" : "No"}</b></div><div class="kpi"><span class="label">Wind</span><b>${w.wind == null ? "n/a" : Math.round(w.wind * 2.237) + " mph"}</b><small>humidity ${w.hum ?? "n/a"}%</small></div></div></section>`;
-  }
   // rest of season
   const rest = (n.season === DATA.season ? DATA.schedule : DATA.nextYearSchedule || []).filter(r => r.round > n.round);
   h += `<section id="rest-sec"><div class="head"><h2>Rest of ${n.season}</h2><span class="note">${rest.length ? rest.length + " more after this" : "Season finale"}</span></div>`;
@@ -457,6 +451,37 @@ function viewNext(){
   return h;
 }
 
+/* weather in Track info: race-day forecast from 7 days out (Open-Meteo), current conditions on race days */
+const WX = c => c == null ? ["", ""] : c === 0 ? ["☀️", "Clear"] : c <= 2 ? ["🌤️", "Partly cloudy"] : c === 3 ? ["☁️", "Cloudy"] : c <= 48 ? ["🌫️", "Fog"]
+  : c <= 57 ? ["🌦️", "Drizzle"] : c <= 67 ? ["🌧️", "Rain"] : c <= 77 ? ["❄️", "Snow"] : c <= 82 ? ["🌦️", "Showers"] : c <= 86 ? ["❄️", "Snow showers"] : ["⛈️", "Storms"];
+const deg = v => v == null ? "n/a" : Math.round(v) + "°";
+function wxDay(d, label){
+  const main = d.sessions[d.sessions.length - 1], [ic] = WX(d.code);
+  return `<div class="kpi${d.sessions.some(x => x.name === "Race") ? " hot" : ""}"><span class="label">${esc(label || d.dow)} · ${esc(d.sessions.map(x => SESS_SHORT[x.name] || x.name).join(", ").replace("Sprint Quali", "SQ").replace("Qualifying", "Quali"))}</span>
+    <b>${ic} ${deg(d.hi)}</b><small>low ${deg(d.lo)} · ${d.rain ?? "n/a"}% rain</small>
+    ${main ? `<small>${esc(SESS_SHORT[main.name] === "Qualifying" ? "Quali" : SESS_SHORT[main.name] || main.name)} ${deg(main.temp)} · ${main.wind == null ? "n/a" : Math.round(main.wind)} mph</small>` : ""}</div>`;
+}
+function wxBlock(n, w){
+  const o = DATA.outlook;
+  if (!o) return "";
+  if (o.opens) return `<div class="note">Race weekend forecast shows up ${esc(ct(o.opens, {weekday: "short", month: "short", day: "numeric"}))}, 7 days out.</div>`;
+  if (!o.days || !o.days.length) return o.error ? `<div class="note">Couldn't get the forecast on the last update. Trying again next run.</div>` : "";
+  let h = "";
+  if (o.raceDay){
+    const c = o.current || {}, [ic, txt] = WX(c.code), today = o.days.find(d => d.date === o.today);
+    const tr = w && w.track != null && Date.now() - new Date(w.at) < 3 * 3600 * 1000 ? Math.round(w.track * 9 / 5 + 32) + "°F" : null;
+    h += `<div class="label">Weather now at the track</div><div class="strip four">
+      <div class="kpi hot"><span class="label">Air</span><b>${deg(c.temp)}F</b><small>${ic} ${esc(txt)}</small></div>
+      <div class="kpi"><span class="label">Track</span><b>${tr || "n/a"}</b><small>${tr ? "OpenF1 sensor" : "posted after sessions"}</small></div>
+      <div class="kpi"><span class="label">Rain</span><b>${c.precip > 0 ? "Raining" : "Dry"}</b><small>${today ? today.rain + "% chance today" : ""}</small></div>
+      <div class="kpi"><span class="label">Wind</span><b>${c.wind == null ? "n/a" : Math.round(c.wind) + " mph"}</b><small>humidity ${c.hum ?? "n/a"}%</small></div></div>`;
+    const rest = o.days.filter(d => d.date > o.today);
+    if (rest.length) h += `<div class="label">Rest of the weekend</div><div class="strip">${rest.map(d => wxDay(d)).join("")}</div>`;
+  } else {
+    h += `<div class="label">Race weekend forecast</div><div class="strip">${o.days.map(d => wxDay(d)).join("")}</div>`;
+  }
+  return h + `<div class="note">Open-Meteo forecast for the circuit, updated ${esc(ctTime(o.checked))}. Each day shows the high and low, then the main session's temperature and wind at its start.</div>`;
+}
 /* "No race this weekend": the next race isn't in the viewer's current Monday-to-Sunday week */
 function weekOf(d){
   const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", {timeZone: TZ, year: "numeric", month: "numeric", day: "numeric", weekday: "short"})
