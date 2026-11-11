@@ -254,7 +254,22 @@ tr.out td{color:var(--faint)}
 .gl-pick{gap:8px}
 .gl-pick select{width:100%;min-width:0;font-family:var(--f-display);font-weight:600;font-size:15px;padding:7px 9px;border-radius:8px;border:1px solid var(--line-strong);background:var(--bg);color:var(--ink)}
 .gl-pick select#gl-c{font-size:16px;background:var(--band);color:var(--band-ink);border-color:var(--band-line)}
-.gl-car{display:grid;grid-template-columns:34px minmax(0,1fr);gap:8px;align-items:center}
+.gl-lab{font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.gl-cars2{display:grid;gap:8px}
+.gl-carbox{border:1px solid var(--line);border-radius:9px;padding:8px;display:grid;gap:7px;background:var(--bg)}
+.gl-carbox.a{box-shadow:inset 3px 0 0 var(--red)}
+.gl-carbox.b{border-style:dashed}
+.gl-carhd{display:flex;align-items:center;gap:8px}
+.gl-carhd .gl-chip{width:40px;flex:none;height:30px}
+.gl-who{display:grid;min-width:0;line-height:1.2}
+.gl-who b{font-family:var(--f-display);font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gl-who small{font-size:11.5px;color:var(--muted)}
+.gl-yrs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.gl-yrs button{font-family:var(--f-mono);font-size:12.5px;font-weight:700;padding:6px 0;border-radius:7px;border:1px solid var(--line-strong);background:var(--panel);color:var(--ink)}
+.gl-yrs button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.gl-yrs button:disabled{opacity:.35;cursor:default}
+.gl-carbox select{font-size:14.5px}
+.gl-pre{align-items:center}
 .gl-chip{display:flex;align-items:center;justify-content:center;height:24px;border-radius:6px;font-style:normal;font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:.06em;color:#fff;background:var(--gc,var(--red))}
 .gl-chip.b{background:transparent;color:var(--ink);border:2px dashed var(--gc,var(--ink))}
 .gl-pre{display:flex;gap:6px;flex-wrap:wrap}
@@ -816,81 +831,102 @@ function histHTML(s){
 }
 
 /* ================= ghost lap =================
-   Two qualifying laps raced on the track map. Positions come from ghost/<circuit>.json (OpenF1, 2023 on, every 0.2 s).
+   Any two drivers' best qualifying laps raced on the track map. ghost/<circuit>.json lists the laps;
+   positions load per lap from ghost/laps/<circuit>/<lap>.json (OpenF1, 2023 on, every 0.2 s).
    Gap at any moment = how much longer the trailing car takes to reach the leader's spot (by share of lap distance). */
 let GI = null, GERR = null;
-const GC = {}, GS = {c: null, a: null, b: null, pre: null};
-const GP = {t: 0, play: false, speed: 1, last: 0, raf: 0, end: 0, segs: [], A: null, B: null, D: null};
+const GC = {}, GL = {}, GS = {c: null, a: null, b: null};
+const GP = {t: 0, play: false, speed: 1, last: 0, raf: 0, end: 0, segs: [], A: null, B: null, dm: 1};
 const GSPD = [0.25, 0.5, 1, 2, 4];
 const gTime = v => v < 60 ? v.toFixed(3) : lap(v);
+const gV = () => Math.floor(Date.now() / 600000);   // cache-buster that changes every 10 min
 const gHashGet = () => { const h = new URLSearchParams(location.hash.slice(1)); return {c: h.get("c"), a: h.get("a"), b: h.get("b")}; };
 function gHashSet(){ try { history.replaceState(null, "", "#" + new URLSearchParams({c: GS.c, a: GS.a || "", b: GS.b || ""}).toString()); } catch (_) {} }
 function viewGhost(){
   return `<section data-fixed="1"><div class="tcard gl-pick">
-    <span class="label">Ghost lap <b style="color:var(--red)">//</b> qualifying laps, 2023 on</span>
-    <select id="gl-c" aria-label="Circuit"><option>Loading circuits...</option></select>
-    <div class="gl-car"><i class="gl-chip" id="gl-ca">A</i><select id="gl-a" aria-label="Car"></select></div>
-    <div class="gl-car"><i class="gl-chip b" id="gl-cb">B</i><select id="gl-b" aria-label="Ghost car"></select></div>
+    <label class="gl-lab" for="gl-c">Track</label>
+    <select id="gl-c"><option>Loading tracks...</option></select>
+    <div id="gl-cars" class="gl-cars2"></div>
     <div class="gl-pre" id="gl-pre"></div>
   </div></section><div id="gl-body" style="display:flex;flex-direction:column;gap:20px"><div class="empty">Loading ghost laps...</div></div>`;
 }
 async function ghostInit(){
   gStop();
   if (!GI){
-    try { const r = await fetch("ghost/index.json?t=" + Math.floor(Date.now() / 600000)); if (!r.ok) throw new Error("HTTP " + r.status); GI = await r.json(); }
+    try { const r = await fetch("ghost/index.json?t=" + gV()); if (!r.ok) throw new Error("HTTP " + r.status); GI = await r.json(); }
     catch (e){ GERR = e.message; }
   }
   if (!GI || !(GI.circuits || []).length){ const b = $("gl-body"); if (b) b.innerHTML = `<div class="empty">Ghost laps aren't available right now${GERR ? " (" + esc(GERR) + ")" : ""}. Try again in a few minutes.</div>`; return; }
   const h = gHashGet(), ids = GI.circuits.map(c => c.id);
-  GS.c = ids.includes(h.c) ? h.c : ids.includes(DATA.next?.circuit?.id) ? DATA.next.circuit.id : gNewest().id;
+  GS.c = ids.includes(h.c) ? h.c : ids.includes(DATA.next?.circuit?.id) ? DATA.next.circuit.id : ids[0];
   gCircuitOpts(); await gLoad(GS.c, h.a, h.b);
 }
-function gNewest(){ return GI.circuits.slice().sort((x, y) => (y.laps[0].year - x.laps[0].year) || (y.laps[0].round - x.laps[0].round))[0]; }
+const gName = c => short(c.gp) + " · " + c.loc;
 function gCircuitOpts(){
   const yr = DATA.nextSeason || DATA.season, cal = (DATA.nextSeason && DATA.nextSeason !== DATA.season ? DATA.nextYearSchedule : DATA.schedule) || [];
   const order = cal.map(r => r.circuit.id), on = GI.circuits.filter(c => order.includes(c.id)).sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
   const off = GI.circuits.filter(c => !order.includes(c.id)).sort((a, b) => gName(a).localeCompare(gName(b)));
-  const opt = c => `<option value="${esc(c.id)}" ${c.id === GS.c ? "selected" : ""}>${esc(gName(c))}</option>`;
-  $("gl-c").innerHTML = (on.length ? `<optgroup label="${yr} calendar">${on.map(opt).join("")}</optgroup>` : "") + (off.length ? `<optgroup label="Not on the ${yr} calendar">${off.map(opt).join("")}</optgroup>` : "");
+  const opt = c => `<option value="${esc(c.id)}" ${c.id === GS.c ? "selected" : ""}>${esc(gName(c))}  (${c.years.slice(-1)[0] === c.years[0] ? c.years[0] : c.years.slice(-1)[0] + " to " + c.years[0]})</option>`;
+  $("gl-c").innerHTML = (on.length ? `<optgroup label="${yr} calendar, in race order">${on.map(opt).join("")}</optgroup>` : "") + (off.length ? `<optgroup label="Not on the ${yr} calendar">${off.map(opt).join("")}</optgroup>` : "");
 }
-const gName = c => short(c.laps[0].gp) + " · " + c.loc;
 async function gLoad(id, a, b){
   const body = $("gl-body"); if (!body) return;
   if (!GC[id]){
     body.innerHTML = `<div class="empty">Loading laps...</div>`;
-    try { const r = await fetch(`ghost/${encodeURIComponent(id)}.json?t=` + Math.floor(Date.now() / 600000)); if (!r.ok) throw new Error("HTTP " + r.status); GC[id] = gPrep(await r.json()); }
-    catch (e){ body.innerHTML = `<div class="empty">Couldn't load this circuit (${esc(e.message)}).</div>`; return; }
+    try { const r = await fetch(`ghost/${encodeURIComponent(id)}.json?t=` + gV()); if (!r.ok) throw new Error("HTTP " + r.status); GC[id] = await r.json(); }
+    catch (e){ body.innerHTML = `<div class="empty">Couldn't load this track (${esc(e.message)}).</div>`; return; }
   }
   if (GS.c !== id) return;
   const C = GC[id], keys = C.laps.map(l => l.key);
-  GS.a = keys.includes(a) ? a : C.laps[0].key;
+  GS.a = keys.includes(a) ? a : C.laps[0].key;            // newest weekend's pole
   const A = gLap(GS.a);
-  const okB = l => l.key !== A.key && l.layout === A.layout;
-  GS.b = keys.includes(b) && okB(gLap(b)) ? b : (gPresets()[0] || {}).b || (C.laps.find(okB) || {}).key || null;
+  GS.b = keys.includes(b) && gOkB(gLap(b)) ? b : (gPresets()[0] || {}).b || (C.laps.find(gOkB) || {}).key || null;
   gDraw(true);
 }
-/* times, distance shares and colours worked out once per lap */
-function gPrep(C){
-  for (const l of C.laps){
-    const n = l.x.length; l.t = []; l.f = [0];
-    for (let k = 0; k < n; k++) l.t.push(Math.min(k * l.dt, l.time));
-    l.t[n - 1] = l.time;
-    // distance along a lightly smoothed path: raw positions wobble a few metres, which would add noise to the gap
-    const sm = a => a.map((_, k) => { let s = 0, c = 0; for (let j = Math.max(0, k - 2); j <= Math.min(n - 1, k + 2); j++){ s += a[j]; c++; } return s / c; });
-    const sx = sm(l.x), sy = sm(l.y);
-    let d = 0; for (let k = 1; k < n; k++){ d += Math.hypot(sx[k] - sx[k - 1], sy[k] - sy[k - 1]); l.f.push(d); }
-    l.f = l.f.map(v => v / (d || 1));
-  }
-  return C;
-}
 const gLap = k => GC[GS.c].laps.find(l => l.key === k);
+const gOkB = l => { const A = gLap(GS.a); return l && A && l.key !== A.key && l.layout === A.layout; };
+const gWeek = l => GC[GS.c].laps.filter(m => m.year === l.year && m.round === l.round);
+/* lap positions load on demand; distance shares worked out once per lap */
+async function gData(key){
+  if (GL[key]) return GL[key];
+  const l = gLap(key), r = await fetch(`ghost/laps/${encodeURIComponent(GS.c)}/${encodeURIComponent(key)}.json?t=` + gV());
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const d = await r.json(), n = d.x.length;
+  d.time = l.time; d.t = []; d.f = [0];
+  for (let k = 0; k < n; k++) d.t.push(Math.min(k * d.dt, l.time));
+  d.t[n - 1] = l.time;
+  // distance along a lightly smoothed path: raw positions wobble a few metres, which would add noise to the gap
+  const sm = a => a.map((_, k) => { let s = 0, c = 0; for (let j = Math.max(0, k - 2); j <= Math.min(n - 1, k + 2); j++){ s += a[j]; c++; } return s / c; });
+  const sx = sm(d.x), sy = sm(d.y);
+  let dist = 0; for (let k = 1; k < n; k++){ dist += Math.hypot(sx[k] - sx[k - 1], sy[k] - sy[k - 1]); d.f.push(dist); }
+  d.sx = sx; d.sy = sy; d.arc = d.f.slice(); d.len = dist;
+  d.f = d.f.map(v => v / (dist || 1));
+  return (GL[key] = Object.assign(d, l));
+}
 function gAt(ts, vs, t){   // linear interpolation, ts sorted
   if (t <= ts[0]) return vs[0]; const n = ts.length; if (t >= ts[n - 1]) return vs[n - 1];
   let lo = 0, hi = n - 1; while (hi - lo > 1){ const m = (lo + hi) >> 1; if (ts[m] <= t) lo = m; else hi = m; }
   return vs[lo] + (t - ts[lo]) / ((ts[hi] - ts[lo]) || 1) * (vs[hi] - vs[lo]);
 }
-const gF = (l, t) => gAt(l.t, l.f, t);       // share of the lap done at time t
-const gT = (l, f) => gAt(l.f, l.t, f);       // time at a share of the lap
+const gF = (l, t) => gAt(l.t, l.fp || l.f, t);       // share of the lap done at time t
+const gT = (l, f) => gAt(l.fp || l.f, l.t, f);       // time at a share of the lap
+/* progress of lap B measured along lap A's line, so both use the same yardstick
+   (each car's own path length differs by several metres from position wobble) */
+function gProject(B, A){
+  const out = [], n = A.sx.length; let k = 0, prev = 0;
+  for (let j = 0; j < B.sx.length; j++){
+    const px = B.sx[j], py = B.sy[j];
+    let best = Infinity, arc = prev;
+    for (let i = Math.max(0, k - 5); i < Math.min(n - 1, k + 80); i++){
+      const ax = A.sx[i], ay = A.sy[i], dx = A.sx[i + 1] - ax, dy = A.sy[i + 1] - ay, L2 = dx * dx + dy * dy || 1;
+      const u = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / L2)), ex = ax + u * dx - px, ey = ay + u * dy - py, e = ex * ex + ey * ey;
+      if (e < best){ best = e; arc = A.arc[i] + u * Math.sqrt(L2); k = i; }
+    }
+    prev = Math.max(prev, arc); out.push(prev);
+  }
+  const a0 = out[0], a1 = out[out.length - 1] - a0 || 1;
+  return out.map(v => Math.min(1, Math.max(0, (v - a0) / a1)));
+}
 function gColors(A, B){
   const hex = c => /^#[0-9a-f]{6}$/i.test(c || "") ? [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)) : null;
   const ca = A.color || "var(--red)", ha = hex(A.color), hb = hex(B.color);
@@ -899,32 +935,49 @@ function gColors(A, B){
 }
 function gPresets(){
   const C = GC[GS.c]; if (!C) return [];
-  const A0 = C.laps[0], poles = C.laps.filter(l => l.pos === 1 && l.layout === A0.layout), out = [];
-  const prev = poles.find(l => l.year < A0.year);
-  if (prev) out.push({id: "ly", label: `vs ${prev.year} pole`, a: A0.key, b: prev.key});
-  const p2 = C.laps.find(l => l.year === A0.year && l.round === A0.round && l.pos === 2);
-  if (p2) out.push({id: "p2", label: "Pole vs P2", a: A0.key, b: p2.key});
-  const best = C.laps.filter(l => l.layout === A0.layout).slice().sort((x, y) => x.time - y.time)[0];
-  if (best && best.key !== A0.key && (!prev || best.key !== prev.key)) out.push({id: "rec", label: `vs fastest (${best.year})`, a: A0.key, b: best.key});
-  const old = poles[poles.length - 1];
-  if (old && old.key !== A0.key && (!prev || old.key !== prev.key) && (!best || old.key !== best.key)) out.push({id: "old", label: `vs ${old.year} pole`, a: A0.key, b: old.key});
+  const A = gLap(GS.a), out = [], wk = gWeek(A), pole = wk.find(l => l.pos === 1);
+  const mate = wk.find(l => l.team === A.team && l.key !== A.key);
+  if (mate) out.push({id: "tm", label: "Teammate", a: A.key, b: mate.key});
+  if (A.pos !== 1 && pole) out.push({id: "pole", label: "vs pole", a: A.key, b: pole.key});
+  if (A.pos === 1){ const p2 = wk.find(l => l.pos === 2); if (p2) out.push({id: "p2", label: "vs P2", a: A.key, b: p2.key}); }
+  const same = C.laps.filter(l => l.layout === A.layout && l.year < A.year);
+  const me = same.find(l => l.name === A.name);
+  if (me) out.push({id: "self", label: `vs own ${me.year} lap`, a: A.key, b: me.key});
+  const prevPole = same.find(l => l.pos === 1);
+  if (prevPole) out.push({id: "ly", label: `vs ${prevPole.year} pole`, a: A.key, b: prevPole.key});
+  const best = C.laps.filter(l => l.layout === A.layout && l.key !== A.key).sort((x, y) => x.time - y.time)[0];
+  if (best && !out.some(o => o.b === best.key)) out.push({id: "rec", label: `vs fastest (${best.code} ${best.year})`, a: A.key, b: best.key});
   return out;
 }
-function gLapOpts(sel, pick, filt){
-  const C = GC[GS.c], yrs = [...new Set(C.laps.map(l => l.year))];
-  sel.innerHTML = yrs.map(y => `<optgroup label="${y}">${C.laps.filter(l => l.year === y).map(l =>
-    `<option value="${l.key}" ${l.key === pick ? "selected" : ""} ${filt && !filt(l) ? "disabled" : ""}>${y} P${l.pos} · ${esc(l.code)} · ${gTime(l.time)}${C.laps.some(m => m.layout !== l.layout) ? (l.layout ? " · old layout" : "") : ""}</option>`).join("")}</optgroup>`).join("");
+/* each car: year buttons, then every driver that weekend in qualifying order */
+function gCarHTML(side){
+  const C = GC[GS.c], cur = gLap(side === "a" ? GS.a : GS.b), A = gLap(GS.a);
+  const yrs = [...new Set(C.laps.map(l => l.year))];
+  const okYear = y => side === "a" || C.laps.some(l => l.year === y && gOkB(l));
+  const wk = cur ? gWeek(cur) : [];
+  return `<div class="gl-carbox ${side}"><div class="gl-carhd"><i class="gl-chip ${side === "b" ? "b" : ""}" id="gl-c${side}">${cur ? esc(cur.code) : "?"}</i>
+      <span class="gl-who"><span class="gl-lab">${side === "a" ? "Car 1" : "Car 2 · ghost"}</span><b>${cur ? esc(cur.name) : "Pick a driver"}</b><small>${cur ? `${cur.year} · P${cur.pos} · ${esc(cur.team)}` : ""}</small></span></div>
+    <div class="gl-yrs" role="group" aria-label="${side === "a" ? "Car 1" : "Car 2"} season">${yrs.map(y => `<button type="button" data-gy="${side}:${y}" aria-pressed="${cur && cur.year === y}" ${okYear(y) ? "" : "disabled"}>${y}</button>`).join("")}</div>
+    <select id="gl-${side}" aria-label="${side === "a" ? "Car 1" : "Car 2"} driver">${wk.map(l =>
+      `<option value="${l.key}" ${cur && l.key === cur.key ? "selected" : ""} ${side === "b" && !gOkB(l) ? "disabled" : ""}>P${l.pos}  ${gTime(l.time)}  ${esc(l.name)} (${esc(l.team)})</option>`).join("")}</select></div>`;
 }
-function gDraw(autoplay){
-  const C = GC[GS.c], A = gLap(GS.a), B = GS.b ? gLap(GS.b) : null, body = $("gl-body");
-  gLapOpts($("gl-a"), GS.a); gLapOpts($("gl-b"), GS.b, l => l.key !== A.key && l.layout === A.layout);
+let GDRAW = 0;
+async function gDraw(autoplay){
+  const body = $("gl-body"), mA = gLap(GS.a), mB = GS.b ? gLap(GS.b) : null, my = ++GDRAW;
+  $("gl-cars").innerHTML = gCarHTML("a") + gCarHTML("b");
   const pre = gPresets();
-  $("gl-pre").innerHTML = pre.map(p => `<button type="button" data-gp="${p.id}" aria-pressed="${p.a === GS.a && p.b === GS.b}">${esc(p.label)}</button>`).join("");
+  $("gl-pre").innerHTML = pre.length ? `<span class="gl-lab">Quick picks</span>` + pre.map(p => `<button type="button" data-gp="${p.id}" aria-pressed="${p.a === GS.a && p.b === GS.b}">${esc(p.label)}</button>`).join("") : "";
   gHashSet();
-  if (!B){ body.innerHTML = `<div class="empty">Only one lap on this layout so far, so there's nothing to race it against yet.</div>`; gStop(); return; }
+  if (!mB){ body.innerHTML = `<div class="empty">Only one lap on this layout so far, so there's nothing to race it against yet.</div>`; gStop(); return; }
+  gStop();
+  let A, B;
+  try { [A, B] = await Promise.all([gData(mA.key), gData(mB.key)]); }
+  catch (e){ if (my === GDRAW) body.innerHTML = `<div class="empty">Couldn't load these laps (${esc(e.message)}).</div>`; return; }
+  if (my !== GDRAW || !$("gl-body")) return;      // a newer pick came in while loading
+  A.fp = null; B.fp = gProject(B, A);
+  const C = GC[GS.c];
   const [ca, cb] = gColors(A, B);
-  $("gl-ca").style.setProperty("--gc", ca); $("gl-ca").textContent = A.code;
-  $("gl-cb").style.setProperty("--gc", cb); $("gl-cb").textContent = B.code;
+  $("gl-ca").style.setProperty("--gc", ca); $("gl-cb").style.setProperty("--gc", cb);
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
   for (const l of [A, B]) for (let k = 0; k < l.x.length; k++){ x0 = Math.min(x0, l.x[k]); x1 = Math.max(x1, l.x[k]); y0 = Math.min(y0, l.y[k]); y1 = Math.max(y1, l.y[k]); }
   const S = Math.max(x1 - x0, y1 - y0), pad = S * 0.07, W = x1 - x0 + 2 * pad, H = y1 - y0 + 2 * pad;
@@ -947,7 +1000,7 @@ function gDraw(autoplay){
   const yrs = A.year !== B.year;
   const diff = B.time - A.time, fast = diff >= 0 ? A : B, slow = diff >= 0 ? B : A;
   const sec = A.sec && B.sec ? [0, 1, 2].map(i => B.sec[i] - A.sec[i]) : null;
-  const who = l => `${l.code}${yrs ? " " + l.year : ""}`;
+  const who = l => `${l.code}${yrs || A.code === B.code ? " " + l.year : ""}`;
   let story = "";
   if (sec){
     const iA = sec.indexOf(Math.max(...sec)), iB = sec.indexOf(Math.min(...sec));
@@ -1050,14 +1103,24 @@ document.addEventListener("click", e => {
   if (e.target.closest("#gl-play")){ GP.play ? gStop() : gPlay(); return; }
   if (e.target.closest("#gl-spd")){ GP.speed = GSPD[(GSPD.indexOf(GP.speed) + 1) % GSPD.length]; $("gl-spd").textContent = GP.speed + "x"; return; }
   const p = e.target.closest("[data-gp]");
-  if (p){ const x = gPresets().find(q => q.id === p.dataset.gp); if (x){ GS.a = x.a; GS.b = x.b; gDraw(true); } }
+  if (p){ const x = gPresets().find(q => q.id === p.dataset.gp); if (x){ GS.a = x.a; GS.b = x.b; gDraw(true); } return; }
+  const y = e.target.closest("[data-gy]");
+  if (y && !y.disabled){   // new season for one car: same driver if they ran that year, else that weekend's pole
+    const [side, yr] = y.dataset.gy.split(":"), cur = gLap(side === "a" ? GS.a : GS.b), C = GC[GS.c];
+    const pool = C.laps.filter(l => l.year === +yr && (side === "a" || gOkB(l)));
+    const pick = (cur && pool.find(l => l.name === cur.name)) || pool.find(l => l.pos === 1) || pool[0];
+    if (!pick) return;
+    if (side === "a"){ GS.a = pick.key; if (!gOkB(gLap(GS.b))){ const o = C.laps.find(gOkB); GS.b = o ? o.key : null; } }
+    else GS.b = pick.key;
+    gDraw(true);
+  }
 });
 document.addEventListener("change", e => {
   if (PAGE !== "ghost") return;
   if (e.target.id === "gl-c"){ GS.c = e.target.value; gStop(); gLoad(GS.c); }
   else if (e.target.id === "gl-a"){
-    GS.a = e.target.value; const A = gLap(GS.a), B = GS.b && gLap(GS.b);
-    if (!B || B.key === A.key || B.layout !== A.layout){ const o = GC[GS.c].laps.find(l => l.key !== A.key && l.layout === A.layout); GS.b = o ? o.key : null; }
+    GS.a = e.target.value;
+    if (!gOkB(gLap(GS.b))){ const o = GC[GS.c].laps.find(gOkB); GS.b = o ? o.key : null; }
     gDraw(true);
   } else if (e.target.id === "gl-b"){ GS.b = e.target.value; gDraw(true); }
 });

@@ -393,11 +393,13 @@ def write_site(data):
         os.makedirs(os.path.join(OUT, "history"), exist_ok=True)
         for f in os.listdir(hist):
             if f.endswith(".json"): open(os.path.join(OUT, "history", f), "wb").write(open(os.path.join(hist, f), "rb").read())
-    gd = os.path.join(HERE, "ghost")   # saved qualifying laps for the Ghost Lap tab
-    if os.path.isdir(gd):
-        os.makedirs(os.path.join(OUT, "ghost"), exist_ok=True)
-        for f in os.listdir(gd):
-            if f.endswith(".json"): open(os.path.join(OUT, "ghost", f), "wb").write(open(os.path.join(gd, f), "rb").read())
+    gd = os.path.join(HERE, "ghost")   # saved qualifying laps for the Ghost Lap tab (circuit files + laps/<circuit>/)
+    for root, _, files in os.walk(gd):
+        dst = os.path.join(OUT, "ghost", os.path.relpath(root, gd))
+        for f in files:
+            if f.endswith(".json"):
+                os.makedirs(dst, exist_ok=True)
+                open(os.path.join(dst, f), "wb").write(open(os.path.join(root, f), "rb").read())
     for f in ("logo.svg",):
         src = os.path.join(HERE, "templates", f)
         if os.path.exists(src): open(os.path.join(OUT, f), "wb").write(open(src, "rb").read())

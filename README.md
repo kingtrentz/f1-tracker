@@ -11,7 +11,7 @@ by kingtrentz⚡️ x claude
 - Other times: about once an hour.
 - `build.py` pulls Jolpica-F1 + OpenF1 (no keys), builds 4 pages + `data.json`, and GitHub Pages publishes them.
 - Tabs: Next Race, Standings (with race results and teammate H2H), History, Ghost Lap.
-- Ghost Lap: `ghost.py` saves the top 3 qualifying laps of every weekend since 2023 (OpenF1 car positions) into `ghost/`, and the page races any two of them on the track map. New laps are added about 2 hours after each qualifying; `python ghost.py` fetches anything missing.
+- Ghost Lap: `ghost.py` saves every driver's best qualifying lap of every weekend since 2023 (OpenF1 car positions) into `ghost/`, and the page races any two of them on the track map (one small file per lap in `ghost/laps/`, loaded on demand). New laps are added about 2 hours after each qualifying; `python ghost.py` fetches anything missing.
 - Pages pull the newest `data.json` every 2 minutes while open.
 - Once a week it commits `heartbeat.txt` so GitHub doesn't pause the schedule (it pauses public-repo schedules after 60 quiet days).
 - When a season ends it switches to the next calendar on its own once Jolpica-F1 publishes it.
