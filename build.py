@@ -470,6 +470,10 @@ def main():
         import news
         news_d = news.update(full if rs_year == y else sched, NOW)
     except Exception as e: print(f"NOTE news skipped ({type(e).__name__}: {e})")
+    try:   # new suggestions from the site's suggestion box go into ideas.md (the workflow commits it)
+        import ideas
+        ideas.update()
+    except Exception as e: print(f"NOTE suggestions not pulled ({type(e).__name__}: {e})")
     ex = openf1_extras(y, nxt)
     data = {
         "season": rs_year, "nextSeason": nxt["season"] if nxt else None,
@@ -510,7 +514,8 @@ def write_site(data):
     pages = {"index.html": ("next", "Next Race"), "standings.html": ("standings", "Standings"),
              "history.html": ("history", "History"), "ghost.html": ("ghost", "Ghost Lap")}
     for fn, (pid, title) in pages.items():
-        html = tpl.replace("__PAGE__", pid).replace("__TITLE__", title).replace("__DATA__", blob)
+        import ideas
+        html = tpl.replace("__PAGE__", pid).replace("__TITLE__", title).replace("__IDEAS__", ideas.TOPIC).replace("__DATA__", blob)
         open(os.path.join(OUT, fn), "w", encoding="utf-8", newline="\n").write(html)
     # Teammates and Results moved into Standings: old links forward there
     for old in ("teammates.html", "results.html"):

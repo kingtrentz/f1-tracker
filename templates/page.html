@@ -1521,7 +1521,7 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) refr
 setInterval(wkPoll, 120000);
 
 /* suggestion box: sends the idea to a private ntfy.sh topic; the owner gets it as a phone notification */
-const IDEAS = "https://ntfy.sh/f1-tracker-ideas-e56c4d9c31";
+const IDEAS = "https://ntfy.sh/__IDEAS__";
 $("ideas-open").addEventListener("click", () => { const f = $("ideas-form"), o = f.hidden; f.hidden = !o; $("ideas-open").setAttribute("aria-expanded", String(o)); if (o) $("idea-txt").focus(); });
 $("ideas-form").addEventListener("submit", async e => {
   e.preventDefault();
