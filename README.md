@@ -11,7 +11,12 @@ by kingtrentz⚡️ x claude
 - Other times: about once an hour.
 - `build.py` pulls Jolpica-F1 + OpenF1 (no keys), builds 4 pages + `data.json`, and GitHub Pages publishes them.
 - Next Race > Track info: race weekend forecast per day (Open-Meteo, free, no key) from 7 days before FP1; on race days it switches to current conditions plus OpenF1 track temperature.
-- Next Race > weekend results: one button per session (FP1 to Race) with each session's P1; tap any to see its full results. Finished rows in the schedule jump there too. Shows this weekend, or last weekend until the next one starts. Practice and sprint quali come from OpenF1; quali, sprint and race switch to Jolpica's official result once posted.
+- Next Race > weekend results: one button per session (FP1 to Race, plus Grid) with each session's P1; tap any for full results. Finished schedule rows jump there too. Shows this weekend, or last weekend until the next one starts.
+  - Practice and sprint quali from OpenF1; quali, sprint and race switch to Jolpica's official result once posted.
+  - Grid: OpenF1 starting grid (penalties applied) vs quali position, with who dropped back.
+  - Race and sprint: tyre strategy per driver (OpenF1 stints/pit) and key moments (safety cars, red flags, penalties from race control).
+  - A session counts as live until its nominal end, then "results soon" until results exist (races up to 3 h, for red flags). While waiting, the open page asks OpenF1 directly every 2 minutes so results show up before the next site update.
+  - No live-timing box: OpenF1's free feed posts after each session.
 - Tabs: Next Race, Standings (with race results and teammate H2H), History, Ghost Lap.
 - Ghost Lap: `ghost.py` saves every driver's best qualifying lap of every weekend since 2023 (OpenF1 car positions) into `ghost/`, and the page races any two of them on the track map (one small file per lap in `ghost/laps/`, loaded on demand). New laps are added about 2 hours after each qualifying; `python ghost.py` fetches anything missing.
 - Pages pull the newest `data.json` every 2 minutes while open.

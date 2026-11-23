@@ -86,7 +86,7 @@ def schedule(year):
 # ---------------- results ----------------
 def driver_row(x, kind="race"):
     d, c = x["Driver"], x["Constructor"]
-    row = {"pos": int(x["position"]), "pt": x.get("positionText", x["position"]), "id": d["driverId"],
+    row = {"pos": int(x["position"]), "pt": x.get("positionText", x["position"]), "id": d["driverId"], "car": x.get("number"),
            "code": d.get("code") or d["familyName"][:3].upper(), "name": f'{d["givenName"]} {d["familyName"]}',
            "num": d.get("permanentNumber") or x.get("number"), "team": c["name"], "teamId": c["constructorId"],
            "pts": float(x.get("points", 0) or 0)}
@@ -275,21 +275,57 @@ def meeting_for(rnd):
         if ms and abs((ms - start).total_seconds()) < 3 * 86400: return m
     return None
 
+NOMINAL = {"Practice 1": 60, "Practice 2": 60, "Practice 3": 60, "Sprint Qualifying": 45, "Sprint": 45, "Qualifying": 60, "Race": 120}
+
+def tidy(msg):
+    """Race control text in sentence case, car codes kept upper: 'FIA STEWARDS: 10 SECOND TIME PENALTY FOR CAR 44 (HAM) ... (20:22:42)'."""
+    import re
+    m = re.sub(r"^FIA STEWARDS:\s*", "", msg).strip()
+    m = re.sub(r"\s*\(\d\d:\d\d:\d\d\)$", "", m).replace("COLLISON", "COLLISION")
+    m = re.sub(r"CARS? (\d+) \(([A-Z]{3})\)", r"(\2)", m)
+    m = m.lower().capitalize()
+    return re.sub(r"\(([a-z]{3})\)", lambda x: x.group(1).upper(), m).replace(" vsc", " VSC").replace(" for  ", " for ")
+
+def race_story(key):
+    """Tyre stints, pit stops and the moments that shaped a race (safety cars, red flags, penalties). OpenF1, after the session."""
+    st = get(f"{OPENF1}/stints?session_key={key}", "openf1")
+    pit = get(f"{OPENF1}/pit?session_key={key}", "openf1")
+    rc = get(f"{OPENF1}/race_control?session_key={key}", "openf1")
+    stints, pits, moments = {}, {}, []
+    for x in sorted(st if isinstance(st, list) else [], key=lambda z: (z.get("driver_number") or 0, z.get("stint_number") or 0)):
+        if x.get("lap_start") is None: continue
+        stints.setdefault(str(x["driver_number"]), []).append([(x.get("compound") or "UNKNOWN")[:1], x["lap_start"], x.get("lap_end") or x["lap_start"], x.get("tyre_age_at_start") or 0])
+    for x in pit if isinstance(pit, list) else []:
+        pits.setdefault(str(x.get("driver_number")), []).append([x.get("lap_number"), x.get("stop_duration")])
+    for x in rc if isinstance(rc, list) else []:
+        msg, cat, flag = x.get("message") or "", x.get("category"), x.get("flag")
+        kind = None
+        if cat == "SafetyCar": kind = "vsc" if "VIRTUAL" in msg else "sc"
+        elif flag == "RED": kind = "red"
+        elif any(k in msg for k in ("TIME PENALTY", "DRIVE THROUGH", "STOP AND GO", "STOP/GO", "GRID PENALTY", "DISQUALIFIED")) and "SERVED" not in msg and "NO FURTHER" not in msg: kind = "pen"
+        if kind: moments.append({"lap": x.get("lap_number"), "kind": kind, "text": tidy(msg)})
+    return {"stints": stints, "pits": pits, "moments": moments} if stints or moments else None
+
 def weekend(rounds):
-    """Results for every finished session of the weekend that's on now, or the last one until the next starts.
-    Practice and sprint quali come from OpenF1; quali, sprint and race switch to Jolpica's official result once posted."""
+    """Results for every session of the weekend that's on now, or the last one until the next starts.
+    Practice and sprint quali come from OpenF1; quali, sprint and race switch to Jolpica's official result once posted.
+    Adds the starting grid after qualifying (penalties applied) and the tyre/pit/race-control story after the race.
+    The page works out live/done itself from start, nominal end and whether results exist (red flags run long)."""
     started = [r for r in rounds if parse(r["sessions"][0]["start"]) <= NOW]
     if not started: return None
     wk = started[-1]
     out = {"season": wk["season"], "round": wk["round"], "name": wk["name"], "sessions": []}
     m = meeting_for(wk)
     of1, nm = {}, {}
+    ended = lambda s: parse(s["start"]) + dt.timedelta(minutes=NOMINAL.get(s["name"], 60)) <= NOW
     if m:
+        out["meeting"] = m.get("meeting_key")
         ss = get(f"{OPENF1}/sessions?meeting_key={m['meeting_key']}", "openf1")
         of1 = {s.get("session_name"): s for s in ss} if isinstance(ss, list) else {}
-        if any(parse(s["end"]) <= NOW for s in wk["sessions"]):
+        if any(ended(s) for s in wk["sessions"]):
             dr = get(f"{OPENF1}/drivers?meeting_key={m['meeting_key']}", "openf1")
             for x in dr if isinstance(dr, list) else []: nm[str(x.get("driver_number"))] = x   # newest session wins (team swaps)
+    def who(n): x = nm.get(str(n), {}); return x.get("name_acronym"), x.get("team_name"), (x.get("full_name") or "").title() or None
     base = f"{JOLPICA}/{wk['season']}/{wk['round']}"
     def official(path, table, kind):
         d = get(f"{base}/{path}/", "jolpica")
@@ -297,23 +333,33 @@ def weekend(rounds):
         except Exception: return None
         return sorted((driver_row(x, kind) for x in rs), key=lambda z: z["pos"]) or None
     for s in wk["sessions"]:
-        st = "done" if parse(s["end"]) <= NOW else "live" if parse(s["start"]) <= NOW else "upcoming"
-        row = {"name": s["name"], "start": s["start"], "end": s["end"], "state": st, "official": False, "rows": []}
-        if st == "done":
+        o = of1.get(s["name"]) or (of1.get("Sprint Shootout") if s["name"] == "Sprint Qualifying" else None) or {}
+        row = {"name": s["name"], "start": s["start"], "end": (parse(s["start"]) + dt.timedelta(minutes=NOMINAL.get(s["name"], 60))).isoformat(),
+               "key": o.get("session_key"), "official": False, "rows": []}
+        if ended(s):
             off = {"Race": ("results", "Results", "race"), "Sprint": ("sprint", "SprintResults", "race"),
                    "Qualifying": ("qualifying", "QualifyingResults", "quali")}.get(s["name"])
             rows = official(*off) if off else None
             if rows: row.update(official=True, rows=rows)
-            else:
-                o = of1.get(s["name"]) or (of1.get("Sprint Shootout") if s["name"] == "Sprint Qualifying" else None)
-                res = get(f"{OPENF1}/session_result?session_key={o['session_key']}", "openf1") if o else None
+            elif o:
+                res = get(f"{OPENF1}/session_result?session_key={o['session_key']}", "openf1")
                 for x in sorted(res if isinstance(res, list) else [], key=lambda z: (z.get("position") is None, z.get("position") or 99)):
-                    n = nm.get(str(x.get("driver_number")), {})
-                    row["rows"].append({"pos": x.get("position"), "num": x.get("driver_number"), "code": n.get("name_acronym"),
-                                        "name": n.get("full_name", "").title() if n.get("full_name") else None, "team": n.get("team_name"),
+                    code, team, name = who(x.get("driver_number"))
+                    row["rows"].append({"pos": x.get("position"), "num": x.get("driver_number"), "car": x.get("driver_number"), "code": code, "name": name, "team": team,
                                         "laps": x.get("number_of_laps"), "gap": x.get("gap_to_leader"), "dnf": x.get("dnf"), "dns": x.get("dns"),
                                         "dsq": x.get("dsq"), "best": x.get("duration")})
+            if s["name"] in ("Race", "Sprint") and row["rows"] and o:
+                row["story"] = race_story(o["session_key"])
         out["sessions"].append(row)
+        if s["name"] == "Qualifying":   # starting grid sits between quali and the race
+            g = {"name": "Grid", "start": row["end"], "end": row["end"], "key": o.get("session_key"), "official": False, "rows": [], "quali": [], "grid": True}
+            if row["rows"]:
+                sg = get(f"{OPENF1}/starting_grid?session_key={o['session_key']}", "openf1") if o else None
+                for x in sorted(sg if isinstance(sg, list) else [], key=lambda z: z.get("position") or 99):
+                    code, team, name = who(x.get("driver_number"))
+                    g["rows"].append({"pos": x.get("position"), "num": x.get("driver_number"), "car": x.get("driver_number"), "code": code, "team": team, "name": name, "lap": x.get("lap_duration")})
+                g["quali"] = [[str(r.get("car") or r.get("num")), r["pos"], r.get("code"), r.get("team")] for r in row["rows"]]
+            out["sessions"].append(g)
     return out
 
 def last_year(nxt):

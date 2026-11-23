@@ -245,9 +245,6 @@ tr.out td{color:var(--faint)}
 .stories small{font-family:var(--f-mono);font-size:10px;color:var(--faint)}
 .stories small a{color:var(--red-ink)}
 /* live / provisional */
-.livebox{border:1px solid var(--red-line);border-radius:10px;padding:10px 12px;display:grid;gap:8px;background:var(--red-soft)}
-.livebox h3{font-size:15px;display:flex;align-items:center;gap:8px}
-.livebox h3::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--red);animation:ping 1.6s infinite}
 .norace{display:grid;gap:2px;padding:10px 12px;border-radius:8px;background:var(--panel);border:1px solid var(--line-strong);box-shadow:inset 3px 0 0 var(--red)}
 .norace b{font-family:var(--f-display);font-size:16px;font-weight:700}
 .norace span{font-size:12.5px;color:var(--muted)}
@@ -321,6 +318,28 @@ button.lrow{width:100%;border:0;border-top:1px solid var(--line);background:var(
 .lrow.go:hover{background:var(--panel)}
 .lrow.go.is-done{opacity:.8}
 .lrow.go .pill.done{background:var(--red-soft);color:var(--red-ink)}
+
+.pill.soon{background:transparent;color:var(--red);border:1px solid var(--red-line)}
+.wk-chip.pending{border-color:var(--red-line)}
+.wk-chip.pending small{color:var(--red)}
+.wk-chips{grid-template-columns:repeat(var(--n,5),minmax(0,1fr))}
+@media (max-width:440px){.wk-chip b{font-size:12.5px}.wk-chips{gap:4px}}
+.wk-sub{margin-top:6px}
+.strat{display:grid;gap:3px;border:1px solid var(--line);border-radius:8px;padding:8px 9px;background:var(--bg)}
+.srow{display:grid;grid-template-columns:34px minmax(0,1fr) 46px;gap:7px;align-items:center}
+.srow .sc{font-family:var(--f-mono);font-size:11px;font-weight:700}
+.srow .ss{font-family:var(--f-mono);font-size:10px;color:var(--muted);text-align:right;white-space:nowrap}
+.sbar{display:flex;height:13px;border-radius:3px;overflow:hidden;background:var(--panel-2);gap:1px}
+.sbar i{display:flex;align-items:center;justify-content:center;font-style:normal;font-family:var(--f-mono);font-size:8.5px;font-weight:800;color:#111;min-width:2px}
+.slegend{display:flex;flex-wrap:wrap;gap:4px 12px;font-family:var(--f-mono);font-size:10.5px;color:var(--muted);align-items:center}
+.slegend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.slegend .sbest{color:var(--ink);font-weight:600}
+.mrow{display:grid;grid-template-columns:36px minmax(0,1fr);gap:6px;padding:7px 10px;border-top:1px solid var(--line);font-size:12.5px;line-height:1.35}
+.mrow:first-child{border-top:0}
+.mrow .ml{font-family:var(--f-mono);font-size:11px;font-weight:700;color:var(--muted)}
+.mrow.sc,.mrow.vsc{box-shadow:inset 3px 0 0 #f5c400}
+.mrow.red{box-shadow:inset 3px 0 0 var(--red)}
+.mrow.pen{box-shadow:inset 3px 0 0 var(--down)}
 
 /* footer */
 footer{display:flex;justify-content:space-between;align-items:center;gap:6px 8px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--line);font-family:var(--f-mono);font-size:11px;color:var(--faint);letter-spacing:.03em}
@@ -439,16 +458,17 @@ function viewNext(){
     <div><div class="label">Lights out in</div><div class="big" id="race-cd">--</div></div>
     <div class="when"><b>${esc(ctDay(n.start))}, ${esc(ctTime(n.start))}</b></div>
   </div></section>`;
-  h += liveBlock();
+  h += weekendBlock();
   // schedule
   const wkHere = DATA.weekend && DATA.weekend.round === n.round && DATA.weekend.season === n.season;
   h += `<section id="sched-sec"><div class="head"><h2>Race weekend schedule</h2><span class="note">${esc(tzAbbr(n.start))}</span></div><div class="list">`;
   for (const s of n.sessions){
-    const st = sessState(s);
+    const ws = wkHere ? (DATA.weekend.sessions.find(x => x.name === s.name) || null) : null;
+    const st = ws ? wkState(ws) : sessState(s);
     const isNext = ns && ns.s === s && !ns.live;
     const go = st !== "upcoming" && wkHere, tagn = go ? "button" : "div";
-    h += `<${tagn} ${go ? `type="button" data-wk="${esc(s.name)}"` : ""} class="lrow ${go ? "go" : ""} ${st === "live" ? "is-live" : st === "done" ? "is-done" : isNext ? "is-next" : ""}"><div class="t">${esc(s.name)}<small>${esc(ctDay(s.start))}</small></div>
-      <div class="r">${esc(ctTime(s.start))}<small>${st === "live" ? '<span class="pill red">Live</span>' : st === "done" ? `<span class="pill done">${go ? "Results ›" : "Done"}</span>` : isNext ? '<span class="pill next">Next</span>' : ""}</small></div></${tagn}>`;
+    h += `<${tagn} ${go ? `type="button" data-wk="${esc(s.name)}"` : ""} class="lrow ${go ? "go" : ""} ${st === "live" || st === "pending" ? "is-live" : st === "done" ? "is-done" : isNext ? "is-next" : ""}"><div class="t">${esc(s.name)}<small>${esc(ctDay(s.start))}</small></div>
+      <div class="r">${esc(ctTime(s.start))}<small>${st === "live" ? '<span class="pill red">Live</span>' : st === "done" ? `<span class="pill done">${go ? "Results ›" : "Done"}</span>` : st === "pending" ? '<span class="pill soon">Results soon</span>' : isNext ? '<span class="pill next">Next</span>' : ""}</small></div></${tagn}>`;
   }
   h += `</div></section>`;
   // track info
@@ -521,66 +541,119 @@ function noRaceBanner(n){
   return `<section data-fixed="1"><div class="norace"><b>No race this weekend</b>
     <span>Next: ${esc(short(n.name))} · ${esc(ct(first, {month: "short", day: "numeric"}))} to ${esc(ct(n.start, ct(first, {month: "short"}) === ct(n.start, {month: "short"}) ? {day: "numeric"} : {month: "short", day: "numeric"}))}${days > 1 ? ` · ${days} weeks away` : " · next week"}</span></div></section>`;
 }
-function liveBlock(){
-  const ns = nextSession();
-  let h = "";
-  if (ns && ns.live){
-    h += `<section data-fixed="1" id="live-sec"><div class="livebox"><h3>${esc(ns.s.name)} is on now</h3>
-      <div class="note" id="live-note">Checking OpenF1 from your browser every minute...</div><div id="live-rows"></div></div></section>`;
-  }
-  h += weekendBlock();
-  return h;
-}
-/* Race weekend results: one button per session (FP1 to Race) so any session of the weekend is one tap away.
-   Shows the weekend that's on now, or the last one until the next weekend starts. Opens on the newest finished session. */
-let WK_PICK = null;   // {k: "season-round", name} once the viewer taps a session; otherwise follow the newest
+/* Race weekend results: one button per session (FP1 to Race, plus the starting grid) so any session is one tap away.
+   Shows the weekend that's on now, or the last one until the next weekend starts. Opens on what matters right now:
+   the session that's on or just finished, else the newest result. */
+let WK_PICK = null;   // {k: "season-round", name} once the viewer taps a session; otherwise follow the action
 const wkKey = w => w ? w.season + "-" + w.round : "";
-function wkSel(w){
-  const S = w.sessions;
-  if (WK_PICK && WK_PICK.k === wkKey(w) && S.some(s => s.name === WK_PICK.name && s.state !== "upcoming")) return WK_PICK.name;
-  const done = S.filter(s => s.state === "done"), live = S.find(s => s.state === "live");
-  const withRows = done.filter(s => s.rows.length);
-  return (live || withRows[withRows.length - 1] || done[done.length - 1] || S[0]).name;
+const CLI = {};       // results this browser fetched straight from OpenF1, by session key (before the next site update)
+function wkRows(s){ return s.rows.length ? s.rows : (CLI[(s.grid ? "g" : "r") + s.key] || []); }
+/* live from the start to the nominal end; then "pending" until results exist (red flags and long races run over),
+   giving up after 3 hours for races and 30 minutes for the rest */
+function wkState(s, now = Date.now()){
+  const w = DATA.weekend;
+  if (s.grid){ const q = w.sessions.find(x => x.name === "Qualifying"); const qs = q ? wkState(q, now) : "upcoming";
+    return qs !== "done" ? "upcoming" : wkRows(s).length ? "done" : now - new Date(s.end) < 24 * 3600e3 ? "pending" : "done"; }
+  const a = new Date(s.start).getTime(), b = new Date(s.end).getTime();
+  if (now < a) return "upcoming";
+  if (now < b) return "live";
+  if (wkRows(s).length) return "done";
+  return now - a < (/^(Race|Sprint)$/.test(s.name) ? 180 : (b - a) / 60000 + 30) * 60000 ? "pending" : "done";
 }
+function wkSel(w){
+  const S = w.sessions, st = S.map(s => wkState(s));
+  if (WK_PICK && WK_PICK.k === wkKey(w) && S.some((s, i) => s.name === WK_PICK.name && st[i] !== "upcoming")) return WK_PICK.name;
+  const act = S.findIndex((s, i) => !s.grid && (st[i] === "live" || st[i] === "pending"));
+  if (act >= 0) return S[act].name;
+  const done = S.filter((s, i) => st[i] === "done" && wkRows(s).length);
+  return (done[done.length - 1] || S.find((s, i) => st[i] === "done") || S[0]).name;
+}
+const CHIP = {"Practice 1": "FP1", "Practice 2": "FP2", "Practice 3": "FP3", "Sprint Qualifying": "SQ", "Sprint": "Sprint", "Qualifying": "Quali", "Grid": "Grid", "Race": "Race"};
 function weekendBlock(){
   const w = DATA.weekend;
-  if (!w || !w.sessions || !w.sessions.some(s => s.state !== "upcoming")) return lastRaceBlock();
-  const sel = wkSel(w), ongoing = DATA.next && DATA.next.round === w.round && DATA.next.season === w.season && w.sessions.some(s => s.state !== "done");
+  if (!w || !w.sessions || !w.sessions.some(s => wkState(s) !== "upcoming")) return lastRaceBlock();
+  const sel = wkSel(w), last = w.sessions[w.sessions.length - 1];
+  const ongoing = w.sessions.some(s => wkState(s) !== "done") || Date.now() - new Date(last.start) < 36 * 3600e3;
   const chips = w.sessions.map(s => {
-    const top = s.rows[0], sub = s.state === "live" ? "Live" : s.state === "upcoming" ? ct(s.start, {weekday: "short"}) : top ? (top.code || "#" + top.num) : "n/a";
-    return `<button type="button" class="wk-chip ${s.state}" data-wk="${esc(s.name)}" aria-pressed="${s.name === sel}" ${s.state === "upcoming" ? "disabled" : ""}>
-      <b>${esc(TAB_SHORT[s.name] || s.name)}</b><small>${s.state === "done" && top ? dot(color(top)) : ""}${esc(sub)}</small></button>`;
+    const st = wkState(s), top = wkRows(s)[0];
+    const sub = st === "live" ? "Live" : st === "pending" ? "Soon" : st === "upcoming" ? (s.grid ? "After Q" : ct(s.start, {weekday: "short"})) : top ? (top.code || "#" + top.num) : "n/a";
+    return `<button type="button" class="wk-chip ${st}" data-wk="${esc(s.name)}" aria-pressed="${s.name === sel}" ${st === "upcoming" ? "disabled" : ""}>
+      <b>${esc(CHIP[s.name] || s.name)}</b><small>${st === "done" && top ? dot(color(top)) : ""}${esc(sub)}</small></button>`;
   }).join("");
-  return `<section id="wk-sec" data-open="1"><div class="head"><h2>${esc(short(w.name))} ${ongoing ? "so far" : "results"}</h2><span class="note">${ongoing ? "This weekend" : "Last weekend"}</span></div>
+  return `<section id="wk-sec" data-open="1"><div class="head"><h2>${esc(short(w.name))}</h2><span class="note">${ongoing ? "This weekend" : "Last weekend"}</span></div>
     <div class="wk-chips" role="group" aria-label="Session" style="--n:${w.sessions.length}">${chips}</div>
     <div id="wk-body" class="wk-body">${wkBody(w, sel)}</div></section>`;
 }
 function wkBody(w, name){
   const s = w.sessions.find(x => x.name === name); if (!s) return "";
-  const counts = /Qualifying|Sprint|Race/.test(s.name);
-  const tag = s.official ? "Official" : counts && s.rows.length ? "Provisional" : "";
-  let h = `<div class="wk-meta"><b>${esc(s.name)}</b><span>${esc(ctDay(s.start))} · ${esc(ctTime(s.start))}${tag ? ` · <em class="${s.official ? "" : "prov"}">${tag}</em>` : ""}</span></div>`;
-  if (s.state === "live") return h + `<div class="empty">${esc(s.name)} is on now. Results land here soon after the flag.</div>`;
-  if (!s.rows.length) return h + `<div class="empty">${Date.now() - new Date(s.end) < 4 * 3600 * 1000 ? "Results usually post within an hour or two of the flag. Checking every 10 minutes." : "OpenF1 has no timing for this session."}</div>`;
-  if (s.official && (s.name === "Race" || s.name === "Sprint")){
-    const r = s.rows, win = r[0], fl = r.find(x => x.fl), dnf = r.filter(x => x.dnf), q = (w.sessions.find(x => x.name === "Qualifying") || {}).rows || [];
-    const pole = s.name === "Race" ? q[0] : null;
-    h += `<div class="facts"><div><span>Winner</span><b>${esc(win ? win.name : "n/a")}</b></div>${pole ? `<div><span>Pole</span><b>${esc(pole.name)}</b></div>` : `<div><span>Most places gained</span><b>${esc(mover(r))}</b></div>`}
-      ${s.name === "Race" ? `<div><span>Fastest lap</span><b>${esc(fl ? fl.code + " " + (fl.flTime || "") : "n/a")}</b></div>` : ""}<div><span>DNFs</span><b>${dnf.length ? esc(dnf.map(x => x.code).join(", ")) : "none"}</b></div></div>`;
-    return h + resTable(r, s.name === "Sprint");
+  const st = wkState(s), rows = wkRows(s), counts = /Qualifying|Sprint|Race/.test(s.name);
+  const tag = s.official ? "Official" : counts && rows.length ? "Provisional" : s.grid && rows.length ? "Penalties applied" : "";
+  let h = `<div class="wk-meta"><b>${esc(s.grid ? "Starting grid" : s.name)}</b><span>${s.grid ? "" : esc(ctDay(s.start)) + " · " + esc(ctTime(s.start))}${tag ? `${s.grid ? "" : " · "}<em class="${s.official || s.grid ? "" : "prov"}">${tag}</em>` : ""}</span></div>`;
+  if (st === "live") return h + `<div class="empty">On now, ends around ${esc(ctTime(s.end))}. The free timing feed posts after the flag, so results show up here then.</div>`;
+  if (!rows.length){
+    if (s.grid) return h + `<div class="empty">${st === "pending" ? "The grid with any penalties posts after qualifying. Checking every 2 minutes." : "No grid posted for this weekend."}</div>`;
+    return h + `<div class="empty">${st === "pending" ? "Session's over or running long. Results usually post within the hour; this page checks every 2 minutes." : "OpenF1 has no timing for this session."}</div>`;
   }
-  if (s.official) return h + qualiTable(s.rows);
-  h += provTable(s.rows, s.name);
-  if (counts) h += `<div class="note">Timing order from OpenF1 as the session ended. Penalties can still change it; the official result replaces it once posted.</div>`;
+  if (s.grid) return h + gridTable(s, rows);
+  if (s.official && (s.name === "Race" || s.name === "Sprint")){
+    const win = rows[0], fl = rows.find(x => x.fl), dnf = rows.filter(x => x.dnf), q = wkRows(w.sessions.find(x => x.name === "Qualifying") || {rows: []});
+    const pole = s.name === "Race" ? q[0] : null;
+    h += `<div class="facts"><div><span>Winner</span><b>${esc(win ? win.name : "n/a")}</b></div>${pole ? `<div><span>Pole</span><b>${esc(pole.name)}</b></div>` : `<div><span>Most places gained</span><b>${esc(mover(rows))}</b></div>`}
+      ${s.name === "Race" ? `<div><span>Fastest lap</span><b>${esc(fl ? fl.code + " " + (fl.flTime || "") : "n/a")}</b></div>` : ""}<div><span>DNFs</span><b>${dnf.length ? esc(dnf.map(x => x.code).join(", ")) : "none"}</b></div></div>`;
+    h += resTable(rows, s.name === "Sprint");
+  } else if (s.official) h += qualiTable(rows);
+  else {
+    h += provTable(rows, s.name);
+    if (counts) h += `<div class="note">Timing order from OpenF1 as the session ended. Penalties can still change it; the official result replaces it once posted.</div>`;
+  }
+  if (s.story) h += storyHTML(s.story, rows);
   return h;
 }
 function qsec(t){ const m = String(t || "").match(/^(?:(\d+):)?(\d+\.\d+)$/); return m ? (+m[1] || 0) * 60 + +m[2] : null; }
-function qualiTable(rows){   // gap to pole for the Q3 ten; times from Q1/Q2 aren't comparable to it, so those rows show where they went out
+function qualiTable(rows){   // gap to pole for the Q3 ten; Q1/Q2 times aren't comparable to it, so those rows show where they went out
   const pole = qsec((rows[0] || {}).q);
   return `<div class="tbl-wrap"><table><thead><tr><th>#</th><th class="l">Driver</th><th>Time</th><th>Gap</th></tr></thead><tbody>${rows.map(r => {
     const v = qsec(r.q), g = r.seg === "Q3" && v != null && pole != null && r.pos !== 1 ? "+" + (v - pole).toFixed(3) : r.seg === "Q3" ? "" : "Out " + r.seg;
     return `<tr class="${r.pos === 1 ? "p1" : ""}"><td class="pos">${r.pos}</td><td class="l drv">${dot(color(r))}${esc(r.code)}<small>${esc(r.team)}</small></td><td class="n">${esc(r.q || "")}</td><td class="n${r.seg === "Q3" ? "" : " out"}">${esc(g)}</td></tr>`;
   }).join("")}</tbody></table></div>`;
+}
+/* starting grid vs qualifying: who got moved by penalties */
+function gridTable(s, rows){
+  const Q = {}; (s.quali.length ? s.quali : (CLI["q" + s.key] || [])).forEach(([car, pos, code, team]) => { Q[car] = {pos, code, team}; });
+  const on = new Set(rows.map(r => String(r.car)));
+  const moved = rows.filter(r => Q[r.car] && Q[r.car].pos !== r.pos && Q[r.car].pos < r.pos);
+  const pl = Object.entries(Q).filter(([car]) => !on.has(car)).sort((a, b) => a[1].pos - b[1].pos);
+  const big = moved.filter(r => r.pos - Q[r.car].pos >= 2);   // dropped 2+ places: a grid penalty, not just shuffled by someone else's
+  let h = big.length ? `<div class="label">Dropped from quali</div><div class="facts">${big.map(r => `<div><span>${esc(r.code)}</span><b>P${Q[r.car].pos} → P${r.pos}</b></div>`).join("")}</div>` : "";
+  h += `<div class="tbl-wrap"><table><thead><tr><th>#</th><th class="l">Driver</th><th>Quali</th><th>+/-</th></tr></thead><tbody>${rows.map(r => {
+    const q = Q[r.car], d = q ? q.pos - r.pos : null;
+    return `<tr class="${r.pos === 1 ? "p1" : ""}"><td class="pos">${r.pos}</td><td class="l drv">${dot(color(r))}${esc(r.code || "#" + r.num)}<small>${esc(r.team || "")}</small></td><td class="n">${q ? "P" + q.pos : ""}</td>
+      <td>${d == null ? '<span class="flat">-</span>' : d > 0 ? `<span class="gain">+${d}</span>` : d < 0 ? `<span class="loss">${d}</span>` : '<span class="flat">0</span>'}</td></tr>`;
+  }).join("")}${pl.map(([car, q]) => `<tr><td class="pos">PL</td><td class="l drv">${dot(color({num: car}))}${esc(q.code)}<small>${esc(q.team || "")}</small></td><td class="n">P${q.pos}</td><td class="n out">Pit lane / DNS</td></tr>`).join("")}</tbody></table></div>`;
+  return h;
+}
+/* after the race: tyre strategy per driver and the moments that shaped it */
+const TYRE = {S: ["Soft", "#e8112d"], M: ["Medium", "#f5c400"], H: ["Hard", "#d9d9d4"], I: ["Inter", "#3aa635"], W: ["Wet", "#1f6fd1"], U: ["Unknown", "#8c8688"]};
+function storyHTML(st, rows){
+  let h = "";
+  const S = st.stints || {}, P = st.pits || {};
+  const total = Math.max(1, ...Object.values(S).flat().map(x => x[2]));
+  if (Object.keys(S).length){
+    const used = new Set(Object.values(S).flat().map(x => x[0]));
+    let best = null; Object.entries(P).forEach(([car, ps]) => ps.forEach(([lapN, t]) => { if (t && t > 1.5 && t < 60 && (!best || t < best.t)) best = {car, t, lapN}; }));
+    const code = car => (rows.find(r => String(r.car) === car) || {}).code || "#" + car;
+    h += `<div class="label wk-sub">Tyre strategy</div><div class="strat">${rows.map(r => {
+      const car = String(r.car), ss = S[car] || [], stops = (P[car] || []).length;
+      return `<div class="srow"><span class="sc">${esc(r.code || "#" + car)}</span><span class="sbar">${ss.map(([c, a, b, age]) => {
+        const [nm, col] = TYRE[c] || TYRE.U, wd = (b - a + 1) / total * 100;
+        return `<i style="width:${wd.toFixed(2)}%;background:${col}" title="${nm}, laps ${a} to ${b}${age ? ", " + age + " laps old" : ""}">${wd > 9 ? c : ""}</i>`;
+      }).join("")}</span><span class="ss">${ss.length ? stops + (stops === 1 ? " stop" : " stops") : ""}</span></div>`;
+    }).join("")}</div>
+    <div class="slegend">${[...used].map(c => `<span><i style="background:${(TYRE[c] || TYRE.U)[1]}"></i>${(TYRE[c] || TYRE.U)[0]}</span>`).join("")}${best ? `<span class="sbest">Fastest stop ${esc(code(best.car))} ${best.t.toFixed(1)}s (lap ${best.lapN})</span>` : ""}</div>`;
+  }
+  const M = st.moments || [];
+  if (M.length) h += `<div class="label wk-sub">Key moments</div><div class="list">${M.map(m => `<div class="mrow ${m.kind}"><span class="ml">${m.lap ? "L" + m.lap : ""}</span><span>${esc(m.text)}</span></div>`).join("")}</div>`;
+  return h;
 }
 document.addEventListener("click", e => {
   const c = e.target.closest("[data-wk]"); if (!c || c.disabled || !DATA.weekend) return;
@@ -594,6 +667,29 @@ document.addEventListener("click", e => {
     sec.scrollIntoView({block: "start", behavior: "smooth"});
   }
 });
+/* results straight from OpenF1 in the browser: a session that just ended shows up minutes before the next site update */
+const CLI_TRIED = {};
+async function wkPoll(){
+  const w = DATA.weekend; if (PAGE !== "next" || !w || document.hidden) return;
+  let got = false;
+  for (const s of w.sessions){
+    if (!s.key || s.rows.length || wkState(s) !== "pending") continue;
+    const ck = (s.grid ? "g" : "r") + s.key; if (CLI[ck] || Date.now() - (CLI_TRIED[ck] || 0) < 100e3) continue;
+    CLI_TRIED[ck] = Date.now();
+    try {
+      const j = u => fetch("https://api.openf1.org/v1/" + u, {cache: "no-store"}).then(r => r.ok ? r.json() : []).catch(() => []);
+      const [res, drv] = await Promise.all([j((s.grid ? "starting_grid" : "session_result") + "?session_key=" + s.key), j("drivers?session_key=" + s.key)]);
+      if (!Array.isArray(res) || !res.length) continue;
+      const nm = {}; (Array.isArray(drv) ? drv : []).forEach(x => { nm[x.driver_number] = x; });
+      CLI[ck] = res.sort((a, b) => (a.position ?? 99) - (b.position ?? 99)).map(x => { const n = nm[x.driver_number] || {};
+        return {pos: x.position, num: x.driver_number, car: x.driver_number, code: n.name_acronym, team: n.team_name, name: n.full_name, laps: x.number_of_laps,
+                gap: x.gap_to_leader, dnf: x.dnf, dns: x.dns, dsq: x.dsq, best: x.duration, lap: x.lap_duration}; });
+      if (s.grid){ const q = w.sessions.find(x => x.name === "Qualifying"); CLI["q" + s.key] = wkRows(q).map(r => [String(r.car || r.num), r.pos, r.code, r.team]); }
+      got = true;
+    } catch (_) {}
+  }
+  if (got) render();
+}
 /* no weekend data (OpenF1 down, or before the first race of the year): the last race's official result */
 function lastRaceBlock(){
   const R = DATA.results || [];
@@ -1265,7 +1361,7 @@ function render(){
   enhance(); updLine(); status(); tickRace();
   if (PAGE === "history") histLoad(HIST_YEAR);
   if (PAGE === "ghost") ghostInit();
-  if (nextSession()?.live) liveStart(); else liveStop();
+  if (PAGE === "next") wkPoll();
 }
 document.addEventListener("click", e => {
   const b = e.target.closest(".xbar"); if (!b) return;
@@ -1335,8 +1431,11 @@ function tickHeader(){
 function tickRace(){
   const el = $("race-cd"); if (!el || !DATA.next) return;
   const ms = new Date(DATA.next.start) - Date.now();
-  if (ms > 0) el.textContent = dur(ms);
-  else if (ms > -120 * 60000) el.innerHTML = "<em>Race on now</em>";
+  const w = DATA.weekend, r = w && w.round === DATA.next.round && w.season === DATA.next.season ? w.sessions.find(x => x.name === "Race") : null;
+  const st = r ? wkState(r) : ms > 0 ? "upcoming" : ms > -120 * 60000 ? "live" : "done";
+  if (st === "upcoming") el.textContent = dur(Math.max(0, ms));
+  else if (st === "live") el.innerHTML = "<em>Race on now</em>";
+  else if (st === "pending") el.innerHTML = "<em>Result coming</em>";
   else el.textContent = "Finished";
 }
 /* race weekends: the Next Race tab shows the session that's on or coming up (FP1, Quali, Race...) */
@@ -1357,28 +1456,6 @@ function tickTab(){
 }
 setInterval(() => { tickHeader(); tickRace(); tickTab(); }, 1000); tickHeader(); tickTab();
 
-/* race day: while a session is on, ask OpenF1 directly from the browser every minute.
-   The free OpenF1 feed posts data after a session, not in real time, so this mostly shows what it has, honestly labeled. */
-let liveTimer = null;
-async function livePoll(){
-  const note = $("live-note"), rows = $("live-rows"); if (!note) return;
-  try {
-    const r = await fetch("https://api.openf1.org/v1/position?session_key=latest&date>" + encodeURIComponent(new Date(Date.now() - 10 * 60000).toISOString()), {cache: "no-store"});
-    if (r.status === 401 || r.status === 403){ note.textContent = "OpenF1 keeps live timing for paid accounts, so the free feed has nothing during the session. Results appear here when it posts them, usually soon after the flag."; return; }
-    const j = r.ok ? await r.json() : [];
-    if (!Array.isArray(j) || !j.length){ note.textContent = "No live positions on the free OpenF1 feed right now (it posts after the session). Checked " + ctTime(new Date()) + "."; rows.innerHTML = ""; return; }
-    const last = {}; j.forEach(p => { last[p.driver_number] = p; });
-    const list = Object.values(last).sort((a, b) => a.position - b.position);
-    note.textContent = "Positions from OpenF1, newest " + ctTime(list[0].date) + " (may lag the TV).";
-    rows.innerHTML = `<div class="tbl-wrap"><table><thead><tr><th>#</th><th class="l">Car</th></tr></thead><tbody>${list.map(p => {
-      const d = (DATA.standings?.drivers || []).find(x => String(x.num) === String(p.driver_number));
-      return `<tr class="${p.position === 1 ? "p1" : ""}"><td class="pos">${p.position}</td><td class="l drv">${dot(color({num: p.driver_number}))}${esc(d ? d.code : "#" + p.driver_number)}<small>${esc(d ? d.team : "")}</small></td></tr>`;
-    }).join("")}</tbody></table></div>`;
-  } catch (e){ note.textContent = "Couldn't reach OpenF1 from this browser. Trying again in a minute."; }
-}
-function liveStart(){ livePoll(); if (!liveTimer) liveTimer = setInterval(livePoll, 60000); }
-function liveStop(){ if (liveTimer){ clearInterval(liveTimer); liveTimer = null; } }
-
 /* pull the newest published data every 2 minutes while the page is open */
 async function refresh(){
   if (document.hidden) return;
@@ -1391,7 +1468,7 @@ async function refresh(){
 }
 setInterval(refresh, 120000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
-setInterval(() => { if (nextSession()?.live) liveStart(); else liveStop(); }, 60000);
+setInterval(wkPoll, 120000);
 
 /* theme toggle: follows the device by default, button flips and remembers */
 (function(){
