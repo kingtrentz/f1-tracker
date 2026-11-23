@@ -1,7 +1,7 @@
 """F1 Season Tracker (unofficial fan project).
 Runs on GitHub Actions (see .github/workflows/update.yml), or by hand: python build.py
 1) pulls the season from Jolpica-F1 (schedule, results, qualifying, sprints, standings)
-2) adds session info, weather and quick provisional results from OpenF1
+2) adds session info, weather and every session result of the race weekend from OpenF1
 3) works out title math and teammate battles
 4) adds new qualifying laps to ghost/ for the Ghost Lap tab (ghost.py, OpenF1 positions)
 5) writes the pages + data.json into _site/ for GitHub Pages
@@ -92,6 +92,7 @@ def driver_row(x, kind="race"):
            "pts": float(x.get("points", 0) or 0)}
     if kind == "quali":
         row["q"] = x.get("Q3") or x.get("Q2") or x.get("Q1") or ""
+        row["seg"] = "Q3" if x.get("Q3") else "Q2" if x.get("Q2") else "Q1"
         return row
     st = x.get("status", "")
     row.update({"grid": int(x.get("grid") or 0), "laps": int(x.get("laps") or 0), "status": st,
@@ -235,7 +236,7 @@ def teammates(races, std):
 # ---------------- OpenF1 extras ----------------
 def openf1_extras(year, nxt):
     """Circuit info, team colours, weather and quick results. All optional: pages work without them."""
-    ex = {"colors": {}, "meeting": None, "weather": None, "provisional": None, "sessionKeys": {}}
+    ex = {"colors": {}, "meeting": None, "weather": None, "sessionKeys": {}}
     drv = get(f"{OPENF1}/drivers?session_key=latest", "openf1") or []
     for x in drv if isinstance(drv, list) else []:
         if x.get("team_colour"): ex["colors"][str(x.get("driver_number"))] = "#" + x["team_colour"].lstrip("#")
@@ -258,23 +259,62 @@ def openf1_extras(year, nxt):
                 x = w[-1]
                 ex["weather"] = {"air": x.get("air_temperature"), "track": x.get("track_temperature"), "rain": x.get("rainfall"),
                                  "wind": x.get("wind_speed"), "hum": x.get("humidity"), "at": x.get("date")}
-            # newest finished session: quick results from OpenF1 before Jolpica posts them
-            done = [s for s in ex["openf1Sessions"] if s.get("end") and parse(s["end"]) <= NOW]
-            if done:
-                s = done[-1]
-                res = get(f"{OPENF1}/session_result?session_key={s['key']}", "openf1")
-                names = get(f"{OPENF1}/drivers?session_key={s['key']}", "openf1") or []
-                nm = {str(x.get("driver_number")): x for x in names} if isinstance(names, list) else {}
-                if isinstance(res, list) and res:
-                    rows = []
-                    for x in sorted(res, key=lambda z: (z.get("position") is None, z.get("position") or 99)):
-                        n = nm.get(str(x.get("driver_number")), {})
-                        rows.append({"pos": x.get("position"), "num": x.get("driver_number"), "code": n.get("name_acronym"),
-                                     "name": n.get("full_name", "").title() if n.get("full_name") else None, "team": n.get("team_name"),
-                                     "laps": x.get("number_of_laps"), "gap": x.get("gap_to_leader"), "dnf": x.get("dnf"), "dns": x.get("dns"), "dsq": x.get("dsq"),
-                                     "best": x.get("duration")})
-                    ex["provisional"] = {"session": s["name"], "end": s["end"], "rows": rows}
     return ex
+
+# ---------------- race weekend results (every session of the current weekend) ----------------
+_meets = {}
+def meeting_for(rnd):
+    """The OpenF1 meeting that matches a Jolpica round (first sessions within 3 days)."""
+    y = rnd["season"]
+    if y not in _meets:
+        m = get(f"{OPENF1}/meetings?year={y}", "openf1")
+        _meets[y] = m if isinstance(m, list) else []
+    start = parse(rnd["sessions"][0]["start"])
+    for m in _meets[y]:
+        ms = parse(m.get("date_start"))
+        if ms and abs((ms - start).total_seconds()) < 3 * 86400: return m
+    return None
+
+def weekend(rounds):
+    """Results for every finished session of the weekend that's on now, or the last one until the next starts.
+    Practice and sprint quali come from OpenF1; quali, sprint and race switch to Jolpica's official result once posted."""
+    started = [r for r in rounds if parse(r["sessions"][0]["start"]) <= NOW]
+    if not started: return None
+    wk = started[-1]
+    out = {"season": wk["season"], "round": wk["round"], "name": wk["name"], "sessions": []}
+    m = meeting_for(wk)
+    of1, nm = {}, {}
+    if m:
+        ss = get(f"{OPENF1}/sessions?meeting_key={m['meeting_key']}", "openf1")
+        of1 = {s.get("session_name"): s for s in ss} if isinstance(ss, list) else {}
+        if any(parse(s["end"]) <= NOW for s in wk["sessions"]):
+            dr = get(f"{OPENF1}/drivers?meeting_key={m['meeting_key']}", "openf1")
+            for x in dr if isinstance(dr, list) else []: nm[str(x.get("driver_number"))] = x   # newest session wins (team swaps)
+    base = f"{JOLPICA}/{wk['season']}/{wk['round']}"
+    def official(path, table, kind):
+        d = get(f"{base}/{path}/", "jolpica")
+        try: rs = d["MRData"]["RaceTable"]["Races"][0][table]
+        except Exception: return None
+        return sorted((driver_row(x, kind) for x in rs), key=lambda z: z["pos"]) or None
+    for s in wk["sessions"]:
+        st = "done" if parse(s["end"]) <= NOW else "live" if parse(s["start"]) <= NOW else "upcoming"
+        row = {"name": s["name"], "start": s["start"], "end": s["end"], "state": st, "official": False, "rows": []}
+        if st == "done":
+            off = {"Race": ("results", "Results", "race"), "Sprint": ("sprint", "SprintResults", "race"),
+                   "Qualifying": ("qualifying", "QualifyingResults", "quali")}.get(s["name"])
+            rows = official(*off) if off else None
+            if rows: row.update(official=True, rows=rows)
+            else:
+                o = of1.get(s["name"]) or (of1.get("Sprint Shootout") if s["name"] == "Sprint Qualifying" else None)
+                res = get(f"{OPENF1}/session_result?session_key={o['session_key']}", "openf1") if o else None
+                for x in sorted(res if isinstance(res, list) else [], key=lambda z: (z.get("position") is None, z.get("position") or 99)):
+                    n = nm.get(str(x.get("driver_number")), {})
+                    row["rows"].append({"pos": x.get("position"), "num": x.get("driver_number"), "code": n.get("name_acronym"),
+                                        "name": n.get("full_name", "").title() if n.get("full_name") else None, "team": n.get("team_name"),
+                                        "laps": x.get("number_of_laps"), "gap": x.get("gap_to_leader"), "dnf": x.get("dnf"), "dns": x.get("dns"),
+                                        "dsq": x.get("dsq"), "best": x.get("duration")})
+        out["sessions"].append(row)
+    return out
 
 def last_year(nxt):
     """Last year's race at this circuit: winner, pole, fastest lap, laps."""
@@ -383,14 +423,12 @@ def main():
         "season": rs_year, "nextSeason": nxt["season"] if nxt else None,
         "schedule": full, "next": nxt, "nextYearSchedule": nxt_sched if nxt and nxt["season"] != rs_year else [],
         "lastYear": last_year(nxt), "meeting": ex.get("meeting"), "openf1Sessions": ex.get("openf1Sessions"),
-        "weather": ex.get("weather"), "outlook": outlook(nxt), "provisional": ex.get("provisional"), "colors": ex.get("colors"),
+        "weather": ex.get("weather"), "outlook": outlook(nxt), "weekend": weekend(sched + nxt_sched), "colors": ex.get("colors"),
         "standings": std, "title": {"drivers": tm_d, "teams": tm_t},
         "results": races, "teammates": teammates(races, std),
         "racesLeft": races_left, "sprintsLeft": sprints_left,
         "stories": load_stories(), "ghost": ghost_ids,
     }
-    if data["provisional"] and nxt and any(r["round"] == nxt["round"] for r in races) and data["provisional"]["session"] == "Race":
-        data["provisional"] = None   # Jolpica already has the official result
     ok_j = not ERRS["jolpica"] and bool(std["drivers"] or full)
     data["status"] = {"jolpica": "ok" if ok_j else "error", "openf1": "ok" if not ERRS["openf1"] else "error",
                       "checked": NOW.isoformat(timespec="seconds"), "errors": (ERRS["jolpica"] + ERRS["openf1"])[:6]}

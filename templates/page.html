@@ -298,6 +298,30 @@ tr.out td{color:var(--faint)}
 .glink small{font-weight:400;color:var(--muted);font-size:11.5px;display:block}
 .glink::after{content:"›";color:var(--red);font-size:20px;line-height:1}
 
+/* race weekend results */
+.wk-chips{display:grid;grid-template-columns:repeat(var(--n,5),minmax(0,1fr));gap:5px}
+.wk-chip{display:grid;gap:1px;justify-items:center;padding:6px 2px 5px;border-radius:8px;border:1px solid var(--line-strong);background:var(--panel);color:var(--ink);min-width:0}
+.wk-chip b{font-family:var(--f-display);font-weight:700;font-size:13.5px;line-height:1.15}
+.wk-chip small{font-family:var(--f-mono);font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.wk-chip small .dot{width:6px;height:6px;margin-right:4px}
+.wk-chip[aria-pressed="true"]{background:var(--band);border-color:var(--band);color:var(--band-ink);box-shadow:inset 0 -3px 0 var(--red)}
+.wk-chip[aria-pressed="true"] small{color:var(--band-muted)}
+.wk-chip.live{border-color:var(--red)}
+.wk-chip.live small{color:var(--red);font-weight:600}
+.wk-chip:disabled{opacity:.45;cursor:default;background:var(--bg);border-style:dashed}
+.wk-body{display:grid;gap:8px;min-width:0}
+.wk-meta{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.wk-meta b{font-family:var(--f-display);font-size:15px}
+.wk-meta span{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.wk-meta em{font-style:normal;font-weight:600;color:var(--up)}
+.wk-meta em.prov{color:var(--gold)}
+td.out{color:var(--faint)}
+button.lrow{width:100%;border:0;border-top:1px solid var(--line);background:var(--bg);text-align:left;font:inherit;color:inherit}
+.list > button.lrow:first-child{border-top:0}
+.lrow.go:hover{background:var(--panel)}
+.lrow.go.is-done{opacity:.8}
+.lrow.go .pill.done{background:var(--red-soft);color:var(--red-ink)}
+
 /* footer */
 footer{display:flex;justify-content:space-between;align-items:center;gap:6px 8px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--line);font-family:var(--f-mono);font-size:11px;color:var(--faint);letter-spacing:.03em}
 footer .legal{flex-basis:100%;font-size:10.5px;color:var(--faint);letter-spacing:0;line-height:1.4}
@@ -417,12 +441,14 @@ function viewNext(){
   </div></section>`;
   h += liveBlock();
   // schedule
+  const wkHere = DATA.weekend && DATA.weekend.round === n.round && DATA.weekend.season === n.season;
   h += `<section id="sched-sec"><div class="head"><h2>Race weekend schedule</h2><span class="note">${esc(tzAbbr(n.start))}</span></div><div class="list">`;
   for (const s of n.sessions){
     const st = sessState(s);
     const isNext = ns && ns.s === s && !ns.live;
-    h += `<div class="lrow ${st === "live" ? "is-live" : st === "done" ? "is-done" : isNext ? "is-next" : ""}"><div class="t">${esc(s.name)}<small>${esc(ctDay(s.start))}</small></div>
-      <div class="r">${esc(ctTime(s.start))}<small>${st === "live" ? '<span class="pill red">Live</span>' : st === "done" ? '<span class="pill done">Done</span>' : isNext ? '<span class="pill next">Next</span>' : ""}</small></div></div>`;
+    const go = st !== "upcoming" && wkHere, tagn = go ? "button" : "div";
+    h += `<${tagn} ${go ? `type="button" data-wk="${esc(s.name)}"` : ""} class="lrow ${go ? "go" : ""} ${st === "live" ? "is-live" : st === "done" ? "is-done" : isNext ? "is-next" : ""}"><div class="t">${esc(s.name)}<small>${esc(ctDay(s.start))}</small></div>
+      <div class="r">${esc(ctTime(s.start))}<small>${st === "live" ? '<span class="pill red">Live</span>' : st === "done" ? `<span class="pill done">${go ? "Results ›" : "Done"}</span>` : isNext ? '<span class="pill next">Next</span>' : ""}</small></div></${tagn}>`;
   }
   h += `</div></section>`;
   // track info
@@ -496,24 +522,81 @@ function noRaceBanner(n){
     <span>Next: ${esc(short(n.name))} · ${esc(ct(first, {month: "short", day: "numeric"}))} to ${esc(ct(n.start, ct(first, {month: "short"}) === ct(n.start, {month: "short"}) ? {day: "numeric"} : {month: "short", day: "numeric"}))}${days > 1 ? ` · ${days} weeks away` : " · next week"}</span></div></section>`;
 }
 function liveBlock(){
-  const ns = nextSession(), pv = DATA.provisional;
+  const ns = nextSession();
   let h = "";
   if (ns && ns.live){
     h += `<section data-fixed="1" id="live-sec"><div class="livebox"><h3>${esc(ns.s.name)} is on now</h3>
       <div class="note" id="live-note">Checking OpenF1 from your browser every minute...</div><div id="live-rows"></div></div></section>`;
   }
-  h += latestBlock();
+  h += weekendBlock();
   return h;
 }
-/* "Latest result" dropdown above the weekend schedule: newest session from OpenF1 on race weekends,
-   otherwise the last race's official result. Starts open so it's the first thing you see. */
-function latestBlock(){
-  const pv = DATA.provisional, R = DATA.results || [];
-  if (pv && pv.rows && pv.rows.length && Date.now() - new Date(pv.end) < 30 * 3600 * 1000){
-    const counts = /Qualifying|Sprint|Race/.test(pv.session);   // practice can't be penalised, so no "provisional" label there
-    return `<section id="last-sec" data-open="1"><div class="head"><h2>Latest result</h2><span class="note">${esc(pv.session)}${counts ? " · provisional" : ""}</span></div>${provTable(pv.rows, pv.session)}
-      ${counts ? `<div class="note">Timing order from OpenF1 as the session ended. Penalties or disqualifications can still change it; the official result replaces it after the race.</div>` : ""}</section>`;
+/* Race weekend results: one button per session (FP1 to Race) so any session of the weekend is one tap away.
+   Shows the weekend that's on now, or the last one until the next weekend starts. Opens on the newest finished session. */
+let WK_PICK = null;   // {k: "season-round", name} once the viewer taps a session; otherwise follow the newest
+const wkKey = w => w ? w.season + "-" + w.round : "";
+function wkSel(w){
+  const S = w.sessions;
+  if (WK_PICK && WK_PICK.k === wkKey(w) && S.some(s => s.name === WK_PICK.name && s.state !== "upcoming")) return WK_PICK.name;
+  const done = S.filter(s => s.state === "done"), live = S.find(s => s.state === "live");
+  const withRows = done.filter(s => s.rows.length);
+  return (live || withRows[withRows.length - 1] || done[done.length - 1] || S[0]).name;
+}
+function weekendBlock(){
+  const w = DATA.weekend;
+  if (!w || !w.sessions || !w.sessions.some(s => s.state !== "upcoming")) return lastRaceBlock();
+  const sel = wkSel(w), ongoing = DATA.next && DATA.next.round === w.round && DATA.next.season === w.season && w.sessions.some(s => s.state !== "done");
+  const chips = w.sessions.map(s => {
+    const top = s.rows[0], sub = s.state === "live" ? "Live" : s.state === "upcoming" ? ct(s.start, {weekday: "short"}) : top ? (top.code || "#" + top.num) : "n/a";
+    return `<button type="button" class="wk-chip ${s.state}" data-wk="${esc(s.name)}" aria-pressed="${s.name === sel}" ${s.state === "upcoming" ? "disabled" : ""}>
+      <b>${esc(TAB_SHORT[s.name] || s.name)}</b><small>${s.state === "done" && top ? dot(color(top)) : ""}${esc(sub)}</small></button>`;
+  }).join("");
+  return `<section id="wk-sec" data-open="1"><div class="head"><h2>${esc(short(w.name))} ${ongoing ? "so far" : "results"}</h2><span class="note">${ongoing ? "This weekend" : "Last weekend"}</span></div>
+    <div class="wk-chips" role="group" aria-label="Session" style="--n:${w.sessions.length}">${chips}</div>
+    <div id="wk-body" class="wk-body">${wkBody(w, sel)}</div></section>`;
+}
+function wkBody(w, name){
+  const s = w.sessions.find(x => x.name === name); if (!s) return "";
+  const counts = /Qualifying|Sprint|Race/.test(s.name);
+  const tag = s.official ? "Official" : counts && s.rows.length ? "Provisional" : "";
+  let h = `<div class="wk-meta"><b>${esc(s.name)}</b><span>${esc(ctDay(s.start))} · ${esc(ctTime(s.start))}${tag ? ` · <em class="${s.official ? "" : "prov"}">${tag}</em>` : ""}</span></div>`;
+  if (s.state === "live") return h + `<div class="empty">${esc(s.name)} is on now. Results land here soon after the flag.</div>`;
+  if (!s.rows.length) return h + `<div class="empty">${Date.now() - new Date(s.end) < 4 * 3600 * 1000 ? "Results usually post within an hour or two of the flag. Checking every 10 minutes." : "OpenF1 has no timing for this session."}</div>`;
+  if (s.official && (s.name === "Race" || s.name === "Sprint")){
+    const r = s.rows, win = r[0], fl = r.find(x => x.fl), dnf = r.filter(x => x.dnf), q = (w.sessions.find(x => x.name === "Qualifying") || {}).rows || [];
+    const pole = s.name === "Race" ? q[0] : null;
+    h += `<div class="facts"><div><span>Winner</span><b>${esc(win ? win.name : "n/a")}</b></div>${pole ? `<div><span>Pole</span><b>${esc(pole.name)}</b></div>` : `<div><span>Most places gained</span><b>${esc(mover(r))}</b></div>`}
+      ${s.name === "Race" ? `<div><span>Fastest lap</span><b>${esc(fl ? fl.code + " " + (fl.flTime || "") : "n/a")}</b></div>` : ""}<div><span>DNFs</span><b>${dnf.length ? esc(dnf.map(x => x.code).join(", ")) : "none"}</b></div></div>`;
+    return h + resTable(r, s.name === "Sprint");
   }
+  if (s.official) return h + qualiTable(s.rows);
+  h += provTable(s.rows, s.name);
+  if (counts) h += `<div class="note">Timing order from OpenF1 as the session ended. Penalties can still change it; the official result replaces it once posted.</div>`;
+  return h;
+}
+function qsec(t){ const m = String(t || "").match(/^(?:(\d+):)?(\d+\.\d+)$/); return m ? (+m[1] || 0) * 60 + +m[2] : null; }
+function qualiTable(rows){   // gap to pole for the Q3 ten; times from Q1/Q2 aren't comparable to it, so those rows show where they went out
+  const pole = qsec((rows[0] || {}).q);
+  return `<div class="tbl-wrap"><table><thead><tr><th>#</th><th class="l">Driver</th><th>Time</th><th>Gap</th></tr></thead><tbody>${rows.map(r => {
+    const v = qsec(r.q), g = r.seg === "Q3" && v != null && pole != null && r.pos !== 1 ? "+" + (v - pole).toFixed(3) : r.seg === "Q3" ? "" : "Out " + r.seg;
+    return `<tr class="${r.pos === 1 ? "p1" : ""}"><td class="pos">${r.pos}</td><td class="l drv">${dot(color(r))}${esc(r.code)}<small>${esc(r.team)}</small></td><td class="n">${esc(r.q || "")}</td><td class="n${r.seg === "Q3" ? "" : " out"}">${esc(g)}</td></tr>`;
+  }).join("")}</tbody></table></div>`;
+}
+document.addEventListener("click", e => {
+  const c = e.target.closest("[data-wk]"); if (!c || c.disabled || !DATA.weekend) return;
+  const w = DATA.weekend, name = c.dataset.wk;
+  WK_PICK = {k: wkKey(w), name};
+  const sec = $("wk-sec"), body = $("wk-body"); if (!sec || !body) return;
+  sec.querySelectorAll(".wk-chip").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.wk === name)));
+  body.innerHTML = wkBody(w, name);
+  if (c.classList.contains("go")){   // tapped from the schedule: open the results section and bring it into view
+    if (sec.classList.contains("closed")) sec.querySelector(".head.tog")?.click();
+    sec.scrollIntoView({block: "start", behavior: "smooth"});
+  }
+});
+/* no weekend data (OpenF1 down, or before the first race of the year): the last race's official result */
+function lastRaceBlock(){
+  const R = DATA.results || [];
   const r = R[R.length - 1]; if (!r) return "";
   const w = r.results[0], pole = r.quali[0], fl = r.results.find(x => x.fl), dnf = r.results.filter(x => x.dnf);
   return `<section id="last-sec" data-open="1"><div class="head"><h2>Latest result</h2><span class="note">${esc(short(r.name))} · ${esc(ct(r.date, {month: "short", day: "numeric"}))}</span></div>
@@ -525,11 +608,11 @@ function latestBlock(){
 function lap(v){ if (v == null) return ""; const m = Math.floor(v / 60), x = (v - m * 60).toFixed(3).padStart(6, "0"); return m ? `${m}:${x}` : x; }
 function provTable(rows, session){
   const race = session === "Race" || session === "Sprint";
-  return `<div class="tbl-wrap"><table><thead><tr><th>#</th><th class="l">Driver</th><th>Laps</th><th>${race ? "Gap" : "Best"}</th></tr></thead><tbody>${rows.map(r => {
-    const last = v => Array.isArray(v) ? v.filter(x => x != null).slice(-1)[0] : v;
-    let g = r.dnf ? "DNF" : r.dns ? "DNS" : r.dsq ? "DSQ" : null;
-    if (!g) g = race ? (r.pos === 1 ? "Leader" : (typeof last(r.gap) === "number" ? "+" + last(r.gap).toFixed(3) : last(r.gap) ?? "")) : lap(last(r.best));
-    return `<tr class="${r.pos === 1 ? "p1" : ""}"><td class="pos">${r.pos ?? "-"}</td><td class="l drv">${dot(color(r))}${esc(r.code || r.num)}<small>${esc(r.team || "")}</small></td><td class="n">${r.laps ?? ""}</td><td class="n">${esc(g)}</td></tr>`;
+  const last = v => Array.isArray(v) ? v.filter(x => x != null).slice(-1)[0] : v;
+  return `<div class="tbl-wrap"><table><thead><tr><th>#</th><th class="l">Driver</th><th>Laps</th>${race ? "" : "<th>Best</th>"}<th>Gap</th></tr></thead><tbody>${rows.map(r => {
+    const out = r.dnf ? "DNF" : r.dns ? "DNS" : r.dsq ? "DSQ" : null, g = last(r.gap);
+    const gap = out || (r.pos === 1 ? (race ? "Leader" : "") : typeof g === "number" ? "+" + g.toFixed(3) : g ?? "");
+    return `<tr class="${r.pos === 1 ? "p1" : ""}"><td class="pos">${r.pos ?? "-"}</td><td class="l drv">${dot(color(r))}${esc(r.code || r.num)}<small>${esc(r.team || "")}</small></td><td class="n">${r.laps ?? ""}</td>${race ? "" : `<td class="n">${out ? "" : lap(last(r.best))}</td>`}<td class="n">${esc(gap)}</td></tr>`;
   }).join("")}</tbody></table></div>`;
 }
 function viewStandings(){
