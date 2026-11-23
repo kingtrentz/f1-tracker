@@ -341,6 +341,24 @@ button.lrow{width:100%;border:0;border-top:1px solid var(--line);background:var(
 .mrow.red{box-shadow:inset 3px 0 0 var(--red)}
 .mrow.pen{box-shadow:inset 3px 0 0 var(--down)}
 
+.star{color:var(--gold);font-size:11px;margin-left:3px;vertical-align:1px}
+.news .nrow{display:grid;gap:2px;padding:8px 11px;border-top:1px solid var(--line);text-decoration:none;color:var(--ink)}
+.news .nrow:first-child{border-top:0}
+.news .nrow:hover{background:var(--panel)}
+.news .nt{font-weight:600;font-size:13.5px;line-height:1.3}
+.news small{font-family:var(--f-mono);font-size:10.5px;color:var(--muted)}
+.news small b{color:var(--red-ink);font-weight:600}
+.ideas{gap:8px}
+.ideas-open{align-self:flex-start;border:1px dashed var(--line-strong);background:var(--panel);border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:600}
+.ideas-open:hover{border-color:var(--red)}
+#ideas-form{display:grid;gap:7px}
+#ideas-form textarea,#ideas-form input{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px;min-width:0;width:100%}
+#ideas-form textarea{resize:vertical}
+.ideas-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px}
+.ideas-row button{border:0;border-radius:8px;background:var(--red);color:var(--on-red);font-weight:700;padding:0 18px}
+.ideas-row button:disabled{opacity:.5}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+
 /* footer */
 footer{display:flex;justify-content:space-between;align-items:center;gap:6px 8px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--line);font-family:var(--f-mono);font-size:11px;color:var(--faint);letter-spacing:.03em}
 footer .legal{flex-basis:100%;font-size:10.5px;color:var(--faint);letter-spacing:0;line-height:1.4}
@@ -366,6 +384,15 @@ footer a{color:var(--muted)}
 
 <div class="wrap">
   <main id="view" style="display:flex;flex-direction:column;gap:20px"></main>
+  <section class="ideas" id="ideas" data-fixed="1">
+    <button type="button" class="ideas-open" id="ideas-open" aria-expanded="false">💡 Suggest a change to this site</button>
+    <form id="ideas-form" hidden>
+      <textarea id="idea-txt" maxlength="600" rows="3" placeholder="What should be added, fixed or changed?" required></textarea>
+      <div class="ideas-row"><input id="idea-name" maxlength="40" placeholder="Your name (optional)" autocomplete="name">
+        <input id="idea-hp" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp"><button type="submit" id="idea-send">Send</button></div>
+      <div class="note" id="idea-note">Goes straight to the site owner.</div>
+    </form>
+  </section>
   <footer>
     <span class="legal">Unofficial fan project. Not affiliated with, endorsed by, or connected to Formula 1, the FIA, or any team. F1 and FORMULA 1 are trademarks of Formula One Licensing B.V., used here only to describe the subject. Data from the free <a href="https://github.com/jolpica/jolpica-f1" target="_blank" rel="noopener">Jolpica-F1</a> and <a href="https://openf1.org" target="_blank" rel="noopener">OpenF1</a> projects and may be delayed or wrong.</span>
   </footer>
@@ -459,6 +486,7 @@ function viewNext(){
     <div class="when"><b>${esc(ctDay(n.start))}, ${esc(ctTime(n.start))}</b></div>
   </div></section>`;
   h += weekendBlock();
+  h += storiesBlock(n);
   // schedule
   const wkHere = DATA.weekend && DATA.weekend.round === n.round && DATA.weekend.season === n.season;
   h += `<section id="sched-sec"><div class="head"><h2>Race weekend schedule</h2><span class="note">${esc(tzAbbr(n.start))}</span></div><div class="list">`;
@@ -587,7 +615,7 @@ function weekendBlock(){
 function wkBody(w, name){
   const s = w.sessions.find(x => x.name === name); if (!s) return "";
   const st = wkState(s), rows = wkRows(s), counts = /Qualifying|Sprint|Race/.test(s.name);
-  const tag = s.official ? "Official" : counts && rows.length ? "Provisional" : s.grid && rows.length ? "Penalties applied" : "";
+  const tag = s.official ? "Official" : counts && rows.length ? "Provisional" : "";
   let h = `<div class="wk-meta"><b>${esc(s.grid ? "Starting grid" : s.name)}</b><span>${s.grid ? "" : esc(ctDay(s.start)) + " · " + esc(ctTime(s.start))}${tag ? `${s.grid ? "" : " · "}<em class="${s.official || s.grid ? "" : "prov"}">${tag}</em>` : ""}</span></div>`;
   if (st === "live") return h + `<div class="empty">On now, ends around ${esc(ctTime(s.end))}. The free timing feed posts after the flag, so results show up here then.</div>`;
   if (!rows.length){
@@ -617,6 +645,26 @@ function qualiTable(rows){   // gap to pole for the Q3 ten; Q1/Q2 times aren't c
     return `<tr class="${r.pos === 1 ? "p1" : ""}"><td class="pos">${r.pos}</td><td class="l drv">${dot(color(r))}${esc(r.code)}<small>${esc(r.team)}</small></td><td class="n">${esc(r.q || "")}</td><td class="n${r.seg === "Q3" ? "" : " out"}">${esc(g)}</td></tr>`;
   }).join("")}</tbody></table></div>`;
 }
+/* Top stories: headlines from BBC Sport, Formula 1, The Race, Autosport and Motorsport.com, grouped by story and
+   ranked by how many outlets are covering it (news.py). Links go to the outlet; only headlines are shown. */
+function ago(d){
+  const m = Math.max(0, (Date.now() - new Date(d)) / 60000);
+  return m < 60 ? Math.max(1, Math.round(m)) + "m ago" : m < 1440 ? Math.round(m / 60) + "h ago" : ct(d, {month: "short", day: "numeric"});
+}
+function storyRows(list){
+  return `<div class="list news">${list.map(x => `<a class="nrow" href="${esc(x.u)}" target="_blank" rel="noopener"><span class="nt">${esc(x.t)}</span>
+    <small>${esc(x.src)} · ${esc(ago(x.at))}${x.n > 1 ? ` · <b>${x.n} outlets</b>` : ""}</small></a>`).join("")}</div>`;
+}
+function newsFor(season, round){ const N = DATA.news; return N && N.season === season && N.rounds ? N.rounds[String(round)] || [] : []; }
+function storiesBlock(n){
+  const w = DATA.weekend, cur = w || n, list = newsFor(cur.season, cur.round).slice(0, 6);
+  const ahead = n && (n.round !== cur.round || n.season !== cur.season) ? newsFor(n.season, n.round).slice(0, 3) : [];
+  if (!list.length && !ahead.length) return "";
+  let h = `<section id="news-sec" data-open="1"><div class="head"><h2>Top stories</h2><span class="note">${esc(short(cur.name))}</span></div>`;
+  if (list.length) h += storyRows(list);
+  if (ahead.length) h += `<div class="label wk-sub">${esc(short(n.name))} build-up</div>${storyRows(ahead)}`;
+  return h + `</section>`;
+}
 /* starting grid vs qualifying: who got moved by penalties */
 function gridTable(s, rows){
   const Q = {}; (s.quali.length ? s.quali : (CLI["q" + s.key] || [])).forEach(([car, pos, code, team]) => { Q[car] = {pos, code, team}; });
@@ -624,12 +672,13 @@ function gridTable(s, rows){
   const moved = rows.filter(r => Q[r.car] && Q[r.car].pos !== r.pos && Q[r.car].pos < r.pos);
   const pl = Object.entries(Q).filter(([car]) => !on.has(car)).sort((a, b) => a[1].pos - b[1].pos);
   const big = moved.filter(r => r.pos - Q[r.car].pos >= 2);   // dropped 2+ places: a grid penalty, not just shuffled by someone else's
-  let h = big.length ? `<div class="label">Dropped from quali</div><div class="facts">${big.map(r => `<div><span>${esc(r.code)}</span><b>P${Q[r.car].pos} → P${r.pos}</b></div>`).join("")}</div>` : "";
-  h += `<div class="tbl-wrap"><table><thead><tr><th>#</th><th class="l">Driver</th><th>Quali</th><th>+/-</th></tr></thead><tbody>${rows.map(r => {
+  const pen = new Set(big.map(r => String(r.car)));
+  let h = `<div class="tbl-wrap"><table><thead><tr><th>#</th><th class="l">Driver</th><th>Quali</th><th>+/-</th></tr></thead><tbody>${rows.map(r => {
     const q = Q[r.car], d = q ? q.pos - r.pos : null;
-    return `<tr class="${r.pos === 1 ? "p1" : ""}"><td class="pos">${r.pos}</td><td class="l drv">${dot(color(r))}${esc(r.code || "#" + r.num)}<small>${esc(r.team || "")}</small></td><td class="n">${q ? "P" + q.pos : ""}</td>
+    return `<tr class="${r.pos === 1 ? "p1" : ""}"><td class="pos">${r.pos}</td><td class="l drv">${dot(color(r))}${esc(r.code || "#" + r.num)}${pen.has(String(r.car)) ? '<span class="star">★</span>' : ""}<small>${esc(r.team || "")}</small></td><td class="n">${q ? "P" + q.pos : ""}</td>
       <td>${d == null ? '<span class="flat">-</span>' : d > 0 ? `<span class="gain">+${d}</span>` : d < 0 ? `<span class="loss">${d}</span>` : '<span class="flat">0</span>'}</td></tr>`;
   }).join("")}${pl.map(([car, q]) => `<tr><td class="pos">PL</td><td class="l drv">${dot(color({num: car}))}${esc(q.code)}<small>${esc(q.team || "")}</small></td><td class="n">P${q.pos}</td><td class="n out">Pit lane / DNS</td></tr>`).join("")}</tbody></table></div>`;
+  if (big.length) h += `<div class="note"><span class="star">★</span> Grid penalty: ${big.map(r => `${esc(r.code)} P${Q[r.car].pos} → P${r.pos}`).join(", ")}</div>`;
   return h;
 }
 /* after the race: tyre strategy per driver and the moments that shaped it */
@@ -800,6 +849,7 @@ function viewResults(){   // "Race results" dropdown on the Standings tab
         <div><span>Most places gained</span><b>${esc(mover(r.results))}</b></div></div>
         ${resTable(r.results)}
         ${r.sprint.length ? `<div class="label">Sprint</div>${resTable(r.sprint, true)}` : ""}
+        ${newsFor(DATA.season, r.round).length ? `<div class="label">Top stories</div>${storyRows(newsFor(DATA.season, r.round).slice(0, 4))}` : ""}
       </div>`;
   }
   h += `</div>${left > 0 || shown.length > 5 ? `<div class="morebar">${left > 0 ? `<button type="button" class="loadmore" id="res-more">Load ${Math.min(5, left)} more <small>${left} earlier race${left === 1 ? "" : "s"}</small></button>` : ""}${shown.length > 5 ? `<button type="button" class="loadmore less" id="res-less">Collapse <small>back to latest 5</small></button>` : ""}</div>` : ""}<div class="note">+/- = places gained from grid · DNF includes DNS/DSQ · FL = fastest lap</div></section>`;
@@ -1469,6 +1519,26 @@ async function refresh(){
 setInterval(refresh, 120000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
 setInterval(wkPoll, 120000);
+
+/* suggestion box: sends the idea to a private ntfy.sh topic; the owner gets it as a phone notification */
+const IDEAS = "https://ntfy.sh/f1-tracker-ideas-e56c4d9c31";
+$("ideas-open").addEventListener("click", () => { const f = $("ideas-form"), o = f.hidden; f.hidden = !o; $("ideas-open").setAttribute("aria-expanded", String(o)); if (o) $("idea-txt").focus(); });
+$("ideas-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const txt = $("idea-txt").value.trim(), name = $("idea-name").value.trim(), note = $("idea-note"), btn = $("idea-send");
+  if ($("idea-hp").value || txt.length < 3) return;
+  let last = 0; try { last = +localStorage.getItem("f1-idea-at") || 0; } catch (_) {}
+  if (Date.now() - last < 60000){ note.textContent = "Got your last one. Give it a minute before sending another."; return; }
+  btn.disabled = true; note.textContent = "Sending...";
+  try {
+    const page = {next: "Next Race", standings: "Standings", history: "History", ghost: "Ghost Lap"}[PAGE] || PAGE;
+    const r = await fetch(IDEAS + "?title=" + encodeURIComponent("F1 Tracker idea" + (name ? " from " + name : "")) + "&tags=bulb", {method: "POST", body: txt + "\n\n(" + page + " tab)"});
+    if (!r.ok) throw new Error(r.status);
+    try { localStorage.setItem("f1-idea-at", String(Date.now())); } catch (_) {}
+    $("idea-txt").value = ""; note.textContent = "Sent. Thanks!";
+  } catch (_){ note.textContent = "Couldn't send right now. Try again in a bit."; }
+  btn.disabled = false;
+});
 
 /* theme toggle: follows the device by default, button flips and remembers */
 (function(){

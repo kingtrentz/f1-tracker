@@ -4,7 +4,8 @@ Runs on GitHub Actions (see .github/workflows/update.yml), or by hand: python bu
 2) adds session info, weather and every session result of the race weekend from OpenF1
 3) works out title math and teammate battles
 4) adds new qualifying laps to ghost/ for the Ghost Lap tab (ghost.py, OpenF1 positions)
-5) writes the pages + data.json into _site/ for GitHub Pages
+5) files F1 news headlines under their round and ranks the top stories (news.py)
+6) writes the pages + data.json into _site/ for GitHub Pages
 No API keys. No third-party packages (standard library only)."""
 import json, os, sys, time, math, hashlib, datetime as dt, urllib.request, urllib.error, urllib.parse
 
@@ -464,6 +465,11 @@ def main():
         import ghost
         ghost_ids = ghost.update(budget=150, sched_now=sched)
     except Exception as e: print(f"NOTE ghost laps skipped ({type(e).__name__}: {e})")
+    news_d = None
+    try:   # top stories per round from F1 news feeds (the workflow commits news/)
+        import news
+        news_d = news.update(full if rs_year == y else sched, NOW)
+    except Exception as e: print(f"NOTE news skipped ({type(e).__name__}: {e})")
     ex = openf1_extras(y, nxt)
     data = {
         "season": rs_year, "nextSeason": nxt["season"] if nxt else None,
@@ -473,7 +479,7 @@ def main():
         "standings": std, "title": {"drivers": tm_d, "teams": tm_t},
         "results": races, "teammates": teammates(races, std),
         "racesLeft": races_left, "sprintsLeft": sprints_left,
-        "stories": load_stories(), "ghost": ghost_ids,
+        "stories": load_stories(), "ghost": ghost_ids, "news": news_d,
     }
     ok_j = not ERRS["jolpica"] and bool(std["drivers"] or full)
     data["status"] = {"jolpica": "ok" if ok_j else "error", "openf1": "ok" if not ERRS["openf1"] else "error",
@@ -527,7 +533,7 @@ def write_site(data):
         src = os.path.join(HERE, "templates", f)
         if os.path.exists(src): open(os.path.join(OUT, f), "wb").write(open(src, "rb").read())
     open(os.path.join(OUT, ".nojekyll"), "w").write("")
-    stable = {k: v for k, v in data.items() if k not in ("status", "weather")}
+    stable = {k: v for k, v in data.items() if k not in ("status", "weather", "news")}
     open(os.path.join(OUT, "fingerprint.txt"), "w").write(hashlib.sha256(json.dumps(stable, sort_keys=True).encode()).hexdigest())
 
 def gate():

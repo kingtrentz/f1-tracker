@@ -13,10 +13,12 @@ by kingtrentz⚡️ x claude
 - Next Race > Track info: race weekend forecast per day (Open-Meteo, free, no key) from 7 days before FP1; on race days it switches to current conditions plus OpenF1 track temperature.
 - Next Race > weekend results: one button per session (FP1 to Race, plus Grid) with each session's P1; tap any for full results. Finished schedule rows jump there too. Shows this weekend, or last weekend until the next one starts.
   - Practice and sprint quali from OpenF1; quali, sprint and race switch to Jolpica's official result once posted.
-  - Grid: OpenF1 starting grid (penalties applied) vs quali position, with who dropped back.
+  - Grid: OpenF1 starting grid vs quali position; drivers who dropped 2+ places get a ★ and a grid penalty footnote.
   - Race and sprint: tyre strategy per driver (OpenF1 stints/pit) and key moments (safety cars, red flags, penalties from race control).
   - A session counts as live until its nominal end, then "results soon" until results exist (races up to 3 h, for red flags). While waiting, the open page asks OpenF1 directly every 2 minutes so results show up before the next site update.
   - No live-timing box: OpenF1's free feed posts after each session.
+- Top stories (`news.py`): each build reads BBC Sport, Formula 1, The Race, Autosport and Motorsport.com RSS, files every headline under its round (named in the headline/category, else by date), groups headlines about the same story and ranks by how many outlets cover it. Headlines and links only. Saved in `news/<season>.json`; a round's top list is frozen 10 days after its race. Shown on Next Race (this round + next round's build-up) and inside each race on Standings.
+- Suggestion box at the bottom of every page: posts to a private ntfy.sh topic (name in templates/page.html, `IDEAS`). Subscribe to it in the ntfy app to get each one as a phone notification.
 - Tabs: Next Race, Standings (with race results and teammate H2H), History, Ghost Lap.
 - Ghost Lap: `ghost.py` saves every driver's best qualifying lap of every weekend since 2023 (OpenF1 car positions) into `ghost/`, and the page races any two of them on the track map (one small file per lap in `ghost/laps/`, loaded on demand). New laps are added about 2 hours after each qualifying; `python ghost.py` fetches anything missing.
 - Pages pull the newest `data.json` every 2 minutes while open.
