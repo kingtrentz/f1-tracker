@@ -6,3 +6,6 @@ Status: [ ] new · [x] done · [-] decided against (add a short reason after the
 
 - [x] **Nov 23, 2026 12:08 AM CT** · anonymous (setup test) · Next Race tab <!-- id:p8w8FXnnH57e -->
   > Setup test from Claude: suggestion box is wired up.
+
+- [x] **Nov 23, 2026 01:24 AM CT** · Claude (test) <!-- id:Ip6p2SL0gNdw -->
+  > Test ping from Claude: if you see this on your phone, the suggestion box is working. (Next Race tab)
