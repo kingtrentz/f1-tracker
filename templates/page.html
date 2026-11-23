@@ -348,10 +348,8 @@ button.lrow{width:100%;border:0;border-top:1px solid var(--line);background:var(
 .news .nt{font-weight:600;font-size:13.5px;line-height:1.3}
 .news small{font-family:var(--f-mono);font-size:10.5px;color:var(--muted)}
 .news small b{color:var(--red-ink);font-weight:600}
-.ideas{gap:8px}
-.ideas-open{align-self:flex-start;border:1px dashed var(--line-strong);background:var(--panel);border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:600}
-.ideas-open:hover{border-color:var(--red)}
 #ideas-form{display:grid;gap:7px}
+#ideas.closed #ideas-form{display:none}
 #ideas-form textarea,#ideas-form input{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px;min-width:0;width:100%}
 #ideas-form textarea{resize:vertical}
 .ideas-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px}
@@ -384,13 +382,13 @@ footer a{color:var(--muted)}
 
 <div class="wrap">
   <main id="view" style="display:flex;flex-direction:column;gap:20px"></main>
-  <section class="ideas" id="ideas" data-fixed="1">
-    <button type="button" class="ideas-open" id="ideas-open" aria-expanded="false">💡 Suggest a change to this site</button>
-    <form id="ideas-form" hidden>
+  <section class="ideas closed" id="ideas">
+    <div class="head tog" id="ideas-open" role="button" tabindex="0" aria-expanded="false"><h2>Suggest a change</h2><span class="note">Ideas or fixes</span></div>
+    <form id="ideas-form" class="sec-body">
       <textarea id="idea-txt" maxlength="600" rows="3" placeholder="What should be added, fixed or changed?" required></textarea>
       <div class="ideas-row"><input id="idea-name" maxlength="40" placeholder="Your name (optional)" autocomplete="name">
         <input id="idea-hp" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp"><button type="submit" id="idea-send">Send</button></div>
-      <div class="note" id="idea-note">Goes straight to the site owner.</div>
+      <div class="note" id="idea-note">Sent straight to the site owner.</div>
     </form>
   </section>
   <footer>
@@ -1522,7 +1520,12 @@ setInterval(wkPoll, 120000);
 
 /* suggestion box: sends the idea to a private ntfy.sh topic; the owner gets it as a phone notification */
 const IDEAS = "https://ntfy.sh/__IDEAS__";
-$("ideas-open").addEventListener("click", () => { const f = $("ideas-form"), o = f.hidden; f.hidden = !o; $("ideas-open").setAttribute("aria-expanded", String(o)); if (o) $("idea-txt").focus(); });
+(() => {   // same dropdown as the other sections; starts closed
+  const sec = $("ideas"), head = $("ideas-open");
+  const flip = () => { const open = sec.classList.toggle("closed") === false; head.setAttribute("aria-expanded", String(open)); if (open) $("idea-txt").focus(); };
+  head.addEventListener("click", flip);
+  head.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); flip(); } });
+})();
 $("ideas-form").addEventListener("submit", async e => {
   e.preventDefault();
   const txt = $("idea-txt").value.trim(), name = $("idea-name").value.trim(), note = $("idea-note"), btn = $("idea-send");
