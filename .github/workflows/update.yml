@@ -1,6 +1,6 @@
 # F1 Tracker: pulls F1 data, builds the pages, publishes to GitHub Pages.
 # Wakes every 10 minutes. On race weekends it updates every time; otherwise about once an hour.
-# Free on public repos. No API keys or personal tokens needed.
+# Free on public repos. No API keys or personal tokens needed. Push alerts use the VAPID_PRIVATE_KEY secret (optional).
 name: Update F1 tracker
 
 on:
@@ -55,16 +55,22 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Install push alert library
+        run: pip install --quiet --disable-pip-version-check pywebpush==2.5.0 || echo "pywebpush not installed, alerts will be skipped"
+
       - name: Pull data and build pages
+        env:
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
         run: python3 build.py
 
-      - name: Save new history seasons, ghost laps, news and suggestions to the repo
+      - name: Save new history seasons, ghost laps, news, suggestions and alert state to the repo
         run: |
-          if [ -n "$(git status --porcelain history ghost news ideas.md)" ]; then
+          if [ -n "$(git status --porcelain history ghost news ideas.md push)" ]; then
             git config user.name "f1-tracker-bot"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add history ghost news ideas.md
-            git commit -m "Save new history seasons / ghost laps / news / suggestions"
+            if [ -d push ]; then git add push; fi
+            git commit -m "Save new history seasons / ghost laps / news / suggestions / alerts"
             git push || echo "push failed, will retry next run"
           fi
 

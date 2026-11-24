@@ -3,6 +3,11 @@
 <meta name="description" content="Unofficial fan-made F1 season tracker: next race countdown, standings, title math, results and teammate battles.">
 <script>try{var t=localStorage.getItem("rl-theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
 <link rel="icon" type="image/svg+xml" href="logo.svg">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="F1 Tracker"><meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f6f4f4" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&family=Nunito:wght@400;500;600;700&display=swap">
 <style>
@@ -350,6 +355,17 @@ button.lrow{width:100%;border:0;border-top:1px solid var(--line);background:var(
 .news small b{color:var(--red-ink);font-weight:600}
 #ideas-form{display:grid;gap:7px}
 #ideas.closed #ideas-form{display:none}
+#alerts.closed #alerts-body{display:none}
+#alerts-body{display:grid;gap:8px}
+#alerts-form{display:grid;gap:8px}
+#alerts [hidden]{display:none}
+.chk{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.chk input{width:20px;height:20px;margin:1px 0 0;flex:none;accent-color:var(--red)}
+.chk span{display:flex;flex-direction:column;font-weight:600;min-width:0}
+.chk small{font-weight:400;font-size:12.5px;color:var(--muted)}
+#alerts .al-row{grid-template-columns:auto auto;justify-content:start;margin-top:2px}
+#alerts .al-row button{padding:10px 20px}
+#alerts .al-row button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line-strong)}
 #ideas-form textarea,#ideas-form input{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px;min-width:0;width:100%}
 #ideas-form textarea{resize:vertical}
 .ideas-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px}
@@ -382,6 +398,20 @@ footer a{color:var(--muted)}
 
 <div class="wrap">
   <main id="view" style="display:flex;flex-direction:column;gap:20px"></main>
+  <section class="ideas closed" id="alerts" hidden>
+    <div class="head tog" id="alerts-open" role="button" tabindex="0" aria-expanded="false"><h2>Alerts</h2><span class="note" id="alerts-sum">Phone and watch</span></div>
+    <div class="sec-body" id="alerts-body">
+      <div class="note" id="alerts-install" hidden>On iPhone: tap Share, then Add to Home Screen. Open F1 Tracker from the new icon and turn alerts on here. They show on your Apple Watch too.</div>
+      <form id="alerts-form" hidden>
+        <label class="chk"><input type="checkbox" id="al-start" checked><span>Session starting<small>About 15 min before quali, sprint and race</small></span></label>
+        <label class="chk"><input type="checkbox" id="al-res" checked><span>Results in<small>Winner and podium, pole and front row</small></span></label>
+        <label class="chk"><input type="checkbox" id="al-news" checked><span>Major news<small>Stories 3+ outlets are covering, up to 2 a day</small></span></label>
+        <label class="chk"><input type="checkbox" id="al-prac"><span>Include practice<small>Starts and results for FP1, FP2, FP3</small></span></label>
+        <div class="ideas-row al-row"><button type="submit" id="al-save">Turn on alerts</button><button type="button" id="al-off" class="ghost" hidden>Turn off</button></div>
+      </form>
+      <div class="note" id="alerts-note"></div>
+    </div>
+  </section>
   <section class="ideas closed" id="ideas">
     <div class="head tog" id="ideas-open" role="button" tabindex="0" aria-expanded="false"><h2>Suggest a change</h2><span class="note">Ideas or fixes</span></div>
     <form id="ideas-form" class="sec-body">
@@ -1541,6 +1571,84 @@ $("ideas-form").addEventListener("submit", async e => {
     $("idea-txt").value = ""; note.textContent = "Sent. Thanks!";
   } catch (_){ note.textContent = "Couldn't send right now. Try again in a bit."; }
   btn.disabled = false;
+});
+
+/* installable app + push alerts. Signups are sealed with the site's public key and posted to an ntfy topic;
+   the next site update (within the hour, every 10 min on race weekends) picks them up and sends a "you're set" alert. */
+const VAPID = "__VAPID__", ALERTS = "https://ntfy.sh/__ALERTS__";
+let SWREG = null;
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").then(r => { SWREG = r; alertsUI(); }).catch(() => {});
+const b64u = b => btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const unb64u = s => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4)), c => c.charCodeAt(0));
+async function seal(obj){
+  const srv = await crypto.subtle.importKey("raw", unb64u(VAPID), {name: "ECDH", namedCurve: "P-256"}, false, []);
+  const eph = await crypto.subtle.generateKey({name: "ECDH", namedCurve: "P-256"}, true, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({name: "ECDH", public: srv}, eph.privateKey, 256);
+  const base = await crypto.subtle.importKey("raw", bits, "HKDF", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey({name: "HKDF", hash: "SHA-256", salt: new Uint8Array(0), info: new TextEncoder().encode("f1-tracker seal")},
+                                            base, {name: "AES-GCM", length: 256}, false, ["encrypt"]);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({name: "AES-GCM", iv}, key, new TextEncoder().encode(JSON.stringify(obj)));
+  return [b64u(await crypto.subtle.exportKey("raw", eph.publicKey)), b64u(iv), b64u(ct)].join(".");
+}
+const AL_IDS = {start: "al-start", res: "al-res", news: "al-news", prac: "al-prac"};
+function alState(){ try { return JSON.parse(localStorage.getItem("f1-alerts") || "null"); } catch (_) { return null; } }
+function alerts_installed(){ return matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; }
+async function alertsUI(){
+  const sec = $("alerts"); if (!sec || !VAPID) return;
+  sec.hidden = false;
+  const ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const can = "PushManager" in window && "Notification" in window && !!SWREG;
+  const needInstall = ios && !alerts_installed();
+  $("alerts-install").hidden = !needInstall;
+  $("alerts-form").hidden = needInstall || !can;
+  const note = $("alerts-note");
+  if (!needInstall && !can) note.textContent = "This browser can't get alerts. On iPhone, add F1 Tracker to your Home Screen first.";
+  else if (!needInstall && Notification.permission === "denied") note.textContent = "Notifications are blocked for F1 Tracker. Turn them on in Settings, Notifications, F1 Tracker.";
+  const st = alState(), sub = SWREG && can ? await SWREG.pushManager.getSubscription().catch(() => null) : null;
+  const on = !!(st && st.on && sub);
+  if (st && st.p) for (const [k, id] of Object.entries(AL_IDS)) $(id).checked = !!st.p[k];
+  $("al-save").textContent = on ? "Save" : "Turn on alerts";
+  $("al-off").hidden = !on;
+  $("alerts-sum").textContent = on ? "On" : "Phone and watch";
+}
+(() => {
+  const sec = $("alerts"), head = $("alerts-open");
+  const flip = () => { const open = sec.classList.toggle("closed") === false; head.setAttribute("aria-expanded", String(open)); };
+  head.addEventListener("click", flip);
+  head.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); flip(); } });
+})();
+async function alSend(op, sub, p){
+  const body = await seal({v: 1, op, sub: sub.toJSON(), p});
+  const r = await fetch(ALERTS, {method: "POST", body});
+  if (!r.ok) throw new Error(r.status);
+}
+$("alerts-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const note = $("alerts-note"), btn = $("al-save");
+  const p = {}; for (const [k, id] of Object.entries(AL_IDS)) p[k] = $(id).checked;
+  btn.disabled = true;
+  try {
+    const perm = await Notification.requestPermission();   // must run straight from the tap (iPhone rule)
+    if (perm !== "granted"){ note.textContent = "Notifications weren't allowed. Turn them on in Settings, Notifications, F1 Tracker."; btn.disabled = false; return; }
+    note.textContent = "Saving...";
+    const sub = await SWREG.pushManager.getSubscription() || await SWREG.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: unb64u(VAPID)});
+    await alSend("sub", sub, p);
+    const was = alState();
+    try { localStorage.setItem("f1-alerts", JSON.stringify({on: true, p})); } catch (_) {}
+    note.textContent = was && was.on ? "Saved. Changes apply after the next site update." : "You're in. A test alert should arrive within the hour (10 min on race weekends).";
+  } catch (_){ note.textContent = "Couldn't turn alerts on right now. Try again in a bit."; }
+  btn.disabled = false; alertsUI();
+});
+$("al-off").addEventListener("click", async () => {
+  const note = $("alerts-note");
+  try {
+    const sub = await SWREG.pushManager.getSubscription();
+    if (sub){ await alSend("unsub", sub, {}).catch(() => {}); await sub.unsubscribe(); }
+    try { localStorage.setItem("f1-alerts", JSON.stringify({on: false, p: alState()?.p})); } catch (_) {}
+    note.textContent = "Alerts are off.";
+  } catch (_){ note.textContent = "Couldn't turn alerts off right now. Try again in a bit."; }
+  alertsUI();
 });
 
 /* theme toggle: follows the device by default, button flips and remembers */

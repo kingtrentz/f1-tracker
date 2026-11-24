@@ -490,6 +490,10 @@ def main():
                       "checked": NOW.isoformat(timespec="seconds"), "errors": (ERRS["jolpica"] + ERRS["openf1"])[:6]}
     data["cadence"] = cadence(nxt)
     write_site(data)
+    try:   # push alerts for people who installed the app and turned them on (the workflow commits push/)
+        import push
+        push.run(data, NOW)
+    except Exception as e: print(f"NOTE alerts skipped ({type(e).__name__}: {e})")
     print(f"OK season {rs_year}, {len(races)} races, next: {nxt['name'] if nxt else 'none'}, errors: {len(ERRS['jolpica'])} jolpica / {len(ERRS['openf1'])} openf1")
     return 0 if ok_j else 1
 
@@ -515,7 +519,9 @@ def write_site(data):
              "history.html": ("history", "History"), "ghost.html": ("ghost", "Ghost Lap")}
     for fn, (pid, title) in pages.items():
         import ideas
-        html = tpl.replace("__PAGE__", pid).replace("__TITLE__", title).replace("__IDEAS__", ideas.TOPIC).replace("__DATA__", blob)
+        import push
+        html = (tpl.replace("__PAGE__", pid).replace("__TITLE__", title).replace("__IDEAS__", ideas.TOPIC)
+                .replace("__ALERTS__", push.TOPIC).replace("__VAPID__", push.public_key()).replace("__DATA__", blob))
         open(os.path.join(OUT, fn), "w", encoding="utf-8", newline="\n").write(html)
     # Teammates and Results moved into Standings: old links forward there
     for old in ("teammates.html", "results.html"):
@@ -534,7 +540,7 @@ def write_site(data):
             if f.endswith(".json"):
                 os.makedirs(dst, exist_ok=True)
                 open(os.path.join(dst, f), "wb").write(open(os.path.join(root, f), "rb").read())
-    for f in ("logo.svg",):
+    for f in ("logo.svg", "manifest.webmanifest", "sw.js", "icon-192.png", "icon-512.png", "apple-touch-icon.png"):
         src = os.path.join(HERE, "templates", f)
         if os.path.exists(src): open(os.path.join(OUT, f), "wb").write(open(src, "rb").read())
     open(os.path.join(OUT, ".nojekyll"), "w").write("")
