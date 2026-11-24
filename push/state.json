@@ -1,9 +1,11 @@
 {
  "init": "2026-11-24T02:21:42+00:00",
  "seen": [
+  "0SY3yBGUuvzD",
   "3Rkwk130rmKP",
   "H0GAlMyN5psh",
-  "b9UEFjD11hR1"
+  "b9UEFjD11hR1",
+  "yylJYpWGqBeE"
  ],
  "sent": {
   "news:https://www.bbc.co.uk/sport/formula1/videos/c9772n2kg5d1o": "2026-11-24T02:21:42+00:00",
@@ -12,5 +14,5 @@
   "res:2026-21-Qualifying": "2026-11-24T02:21:42+00:00",
   "res:2026-21-Race": "2026-11-24T02:21:42+00:00"
  },
- "subscribers": 1
+ "subscribers": 2
 }
