@@ -1,7 +1,7 @@
 /* F1 Tracker service worker: makes the site installable, shows push alerts.
    Network first: pages and data.json always come fresh when there's signal; the last copy is only a fallback offline.
    Ghost laps, history and everything else aren't touched (straight to the network). */
-const CACHE = "f1-shell-v1";
+const CACHE = "f1-shell-v2";
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", e => e.waitUntil((async () => {
   for (const k of await caches.keys()) if (k !== CACHE) await caches.delete(k);
@@ -15,7 +15,8 @@ self.addEventListener("fetch", e => {
   const key = u.origin + u.pathname;
   e.respondWith((async () => {
     try {
-      const res = await fetch(r);
+      // GitHub Pages says max-age=600; "no-cache" makes the phone ask GitHub each time (cheap 304 when nothing changed)
+      const res = await fetch(page ? u.href : r.url, {cache: "no-cache", credentials: "same-origin"});
       if (res.ok) { const c = res.clone(); caches.open(CACHE).then(cc => cc.put(key, c)).catch(() => {}); }
       return res;
     } catch (err) {
