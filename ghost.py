@@ -41,6 +41,7 @@ def q(d): return urllib.parse.quote(d.astimezone(B.UTC).strftime("%Y-%m-%dT%H:%M
 def of1(path):
     """OpenF1 GET with gentle pacing (shared timer with build.get) and longer back-off on 429."""
     for i in range(5):
+        if time.time() > B.DEADLINE: break                  # out of run time: stop, the rest next run
         n = len(B.ERRS["openf1"])
         d = B.get(f"{B.OPENF1}/{path}", "openf1", tries=1)
         if d is not None: return d

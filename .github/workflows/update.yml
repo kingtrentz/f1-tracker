@@ -49,9 +49,8 @@ jobs:
     if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+    outputs:
+      publish: ${{ steps.build.outputs.publish }}
     steps:
       - uses: actions/checkout@v7
 
@@ -59,11 +58,14 @@ jobs:
         run: pip install --quiet --disable-pip-version-check pywebpush==2.5.0 || echo "pywebpush not installed, alerts will be skipped"
 
       - name: Pull data and build pages
+        id: build
         env:
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          PYTHONUNBUFFERED: "1"   # print progress as it happens, so a slow run shows where it got stuck
         run: python3 build.py
 
       - name: Save new history seasons, ghost laps, news, suggestions and alert state to the repo
+        if: steps.build.outputs.publish == 'true'
         run: |
           if [ -n "$(git status --porcelain history ghost news ideas.md push)" ]; then
             git config user.name "f1-tracker-bot"
@@ -75,17 +77,49 @@ jobs:
           fi
 
       - uses: actions/upload-pages-artifact@v5
+        if: steps.build.outputs.publish == 'true'
         with:
           path: _site
 
+  # Publishing is its own job. GitHub's artifact list can lag a moment behind the upload, and
+  # deploy-pages looked it up within half a second and found nothing ("No artifacts named github-pages").
+  # The job hand-off adds a natural delay, and one retry after a pause covers the rest.
+  deploy:
+    needs: update
+    if: needs.update.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url || steps.deploy_retry.outputs.page_url }}
+    steps:
       - name: Publish to GitHub Pages
         id: deploy
+        continue-on-error: true
         uses: actions/deploy-pages@v5
 
+      - name: Wait before retrying the publish
+        if: steps.deploy.outcome == 'failure'
+        run: sleep 30
+
+      - name: Publish to GitHub Pages (retry)
+        id: deploy_retry
+        if: steps.deploy.outcome == 'failure'
+        uses: actions/deploy-pages@v5
+
+  healthcheck:
+    needs: [update, deploy]
+    if: always() && needs.update.result != 'skipped'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
       - name: Ping healthchecks.io (optional)
-        if: always()
         env:
           HC: ${{ secrets.HEALTHCHECK_URL }}
+          UPDATE: ${{ needs.update.result }}
+          DEPLOY: ${{ needs.deploy.result }}
+          PUBLISH: ${{ needs.update.outputs.publish }}
         run: |
           [ -z "$HC" ] && exit 0
-          if [ "${{ job.status }}" = "success" ]; then curl -fsS -m 10 "$HC" >/dev/null || true; else curl -fsS -m 10 "$HC/fail" >/dev/null || true; fi
+          if [ "$UPDATE" = "success" ] && [ "$PUBLISH" != "true" ]; then exit 0; fi   # skipped publish, next run retries
+          if [ "$UPDATE" = "success" ] && [ "$DEPLOY" = "success" ]; then curl -fsS -m 10 "$HC" >/dev/null || true; else curl -fsS -m 10 "$HC/fail" >/dev/null || true; fi
