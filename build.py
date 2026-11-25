@@ -23,26 +23,40 @@ RACE_MAX, SPRINT_MAX = 25, 8                  # most points one driver can score
 TEAM_RACE_MAX, TEAM_SPRINT_MAX = 25 + 18, 8 + 7  # a 1-2 finish
 DUR = {"Practice 1": 60, "Practice 2": 60, "Practice 3": 60, "Sprint Qualifying": 45,
        "Sprint": 60, "Qualifying": 60, "Race": 120}   # minutes, used to mark sessions live/done
-ERRS = {"jolpica": [], "openf1": [], "meteo": []}
+ERRS = {"jolpica": [], "openf1": [], "meteo": [], "site": []}
 _last = [0.0]
+# Hard stop for network calls, so a slow or unreachable API can't run the job into its 10 minute
+# limit (GitHub then cancels the run). Past this, get() returns None at once and logs it as an error.
+DEADLINE = time.time() + float(os.environ.get("F1_TIME_BUDGET", "420"))
+_DOWN = {}         # src -> hard failures this run; Jolpica counts as down after 2 and is not called again
+DOWN_AFTER = {"jolpica": 2}
 
 def get(url, src, tries=3):
     """GET JSON. Jolpica allows about 4 requests a second, so space calls out."""
+    if time.time() > DEADLINE:
+        ERRS[src].append(f"out of time {url}"); return None
+    if _DOWN.get(src, 0) >= DOWN_AFTER.get(src, 10 ** 6):
+        ERRS[src].append(f"skipped ({src} down) {url}"); return None
+    back = (5, 15) if src == "jolpica" else (3, 6)   # Jolpica blips usually clear within ~20 seconds
     for i in range(tries):
         wait = 0.3 - (time.time() - _last[0])
         if wait > 0: time.sleep(wait)
         _last[0] = time.time()
+        last = i == tries - 1 or time.time() > DEADLINE
         try:
-            with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=30) as r:
+            with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=20) as r:
                 return json.loads(r.read() or b"null")
         except urllib.error.HTTPError as e:
-            if e.code in (429, 500, 502, 503, 504) and i < tries - 1:
-                time.sleep(3 * (i + 1)); continue
             if e.code == 404: return None
-            ERRS[src].append(f"{e.code} {url}"); return None
+            if e.code in (429, 500, 502, 503, 504) and not last:
+                ra = e.headers.get("Retry-After") if e.headers else None
+                time.sleep(min(30, int(ra)) if ra and ra.isdigit() else back[min(i, len(back) - 1)]); continue
+            ERRS[src].append(f"{e.code} {url}")
         except Exception as e:
-            if i < tries - 1: time.sleep(3); continue
-            ERRS[src].append(f"{type(e).__name__} {url}"); return None
+            if not last: time.sleep(back[min(i, len(back) - 1)]); continue
+            ERRS[src].append(f"{type(e).__name__} {url}")
+        _DOWN[src] = _DOWN.get(src, 0) + 1
+        return None
 
 def jol_all(path, table, key):
     """All pages of a Jolpica endpoint (max 100 rows a page), races merged by round."""
@@ -490,12 +504,29 @@ def main():
                       "checked": NOW.isoformat(timespec="seconds"), "errors": (ERRS["jolpica"] + ERRS["openf1"])[:6]}
     data["cadence"] = cadence(nxt)
     write_site(data)
-    try:   # push alerts for people who installed the app and turned them on (the workflow commits push/)
-        import push
-        push.run(data, NOW)
-    except Exception as e: print(f"NOTE alerts skipped ({type(e).__name__}: {e})")
+    if ok_j:
+        try:   # push alerts for people who installed the app and turned them on (the workflow commits push/)
+            import push
+            push.run(data, NOW)
+        except Exception as e: print(f"NOTE alerts skipped ({type(e).__name__}: {e})")
     print(f"OK season {rs_year}, {len(races)} races, next: {nxt['name'] if nxt else 'none'}, errors: {len(ERRS['jolpica'])} jolpica / {len(ERRS['openf1'])} openf1")
-    return 0 if ok_j else 1
+    return finish(ok_j)
+
+def finish(ok_j):
+    """Tell the workflow whether to publish. Bad Jolpica data is never published (the live site keeps
+    the last good build). A short Jolpica outage is only a warning, since the next run retries; the run
+    fails (and GitHub emails) only once the live site is more than F1_STALE_HOURS old."""
+    out = os.environ.get("GITHUB_OUTPUT")
+    if out: open(out, "a").write(f"publish={'true' if ok_j else 'false'}\n")
+    if ok_j: return 0
+    for e in ERRS["jolpica"][:6]: print(f"  jolpica error: {e}")
+    stale_h = float(os.environ.get("F1_STALE_HOURS", "6"))
+    age = live_age_min()
+    if age is not None and age < stale_h * 60:
+        print(f"::warning::Jolpica data incomplete, not publishing this run. Live site is {age:.0f} min old, next run retries.")
+        return 0
+    print(f"::error::Jolpica data incomplete and the live site is {'unreachable' if age is None else f'{age / 60:.1f} hours old'}.")
+    return 1
 
 def load_stories():
     """Researched headlines for the History tab (templates/stories.json), keyed by season."""
@@ -547,21 +578,31 @@ def write_site(data):
     stable = {k: v for k, v in data.items() if k not in ("status", "weather", "news")}
     open(os.path.join(OUT, "fingerprint.txt"), "w").write(hashlib.sha256(json.dumps(stable, sort_keys=True).encode()).hexdigest())
 
+def live_data():
+    """The data.json the live site is serving now (None when unknown)."""
+    repo = os.environ.get("GITHUB_REPOSITORY", "")
+    if "/" not in repo: return None
+    user, name = repo.split("/", 1)
+    return get(f"https://{user.lower()}.github.io/{name}/data.json?t={int(time.time())}", "site", tries=2)
+
+def live_age_min(d=None):
+    d = d or live_data()
+    if d and d.get("status", {}).get("checked"):
+        return (NOW - parse(d["status"]["checked"])).total_seconds() / 60
+    return None
+
 def gate():
     """Called by the workflow every 10 min. Prints run=true when an update is due:
     always on race weekends (cadence 10), otherwise once the live data is 55+ min old."""
-    repo = os.environ.get("GITHUB_REPOSITORY", "")
     due, why = True, "no live data yet"
-    if "/" in repo:
-        user, name = repo.split("/", 1)
-        d = get(f"https://{user.lower()}.github.io/{name}/data.json?t={int(time.time())}", "openf1", tries=1)
-        if d and d.get("status", {}).get("checked"):
-            age = (NOW - parse(d["status"]["checked"])).total_seconds() / 60
-            cad = d.get("cadence", 60)
-            nxt = d.get("next") or {}
-            soon = bool(nxt.get("sessions")) and parse(nxt["sessions"][0]["start"]) - dt.timedelta(hours=13) <= NOW
-            due = cad <= 10 or soon or age >= 55
-            why = f"cadence {cad}, last update {age:.0f} min ago" + (", weekend starting" if soon else "")
+    d = live_data()
+    age = live_age_min(d)
+    if age is not None:
+        cad = d.get("cadence", 60)
+        nxt = d.get("next") or {}
+        soon = bool(nxt.get("sessions")) and parse(nxt["sessions"][0]["start"]) - dt.timedelta(hours=13) <= NOW
+        due = cad <= 10 or soon or age >= 55
+        why = f"cadence {cad}, last update {age:.0f} min ago" + (", weekend starting" if soon else "")
     print(f"{'Update due' if due else 'Skipping'}: {why}")
     out = os.environ.get("GITHUB_OUTPUT")
     if out: open(out, "a").write(f"run={'true' if due else 'false'}\n")
